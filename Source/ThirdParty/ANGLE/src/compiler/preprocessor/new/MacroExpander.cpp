@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <cassert>
 #include <sstream>
+#include <stdlib.h>
 
 #include "Diagnostics.h"
 #include "Token.h"
@@ -222,7 +223,7 @@ bool MacroExpander::expandMacro(const Macro& macro,
         replaceMacroParams(macro, args, replacements);
     }
 
-    for (size_t i = 0; i < replacements->size(); ++i)
+    for (std::size_t i = 0; i < replacements->size(); ++i)
     {
         Token& repl = replacements->at(i);
         if (i == 0)
@@ -309,7 +310,7 @@ bool MacroExpander::collectMacroArgs(const Macro& macro,
     // Pre-expand each argument before substitution.
     // This step expands each argument individually before they are
     // inserted into the macro body.
-    for (size_t i = 0; i < args->size(); ++i)
+    for (std::size_t i = 0; i < args->size(); ++i)
     {
         MacroArg& arg = args->at(i);
         TokenLexer lexer(&arg);
@@ -330,7 +331,7 @@ void MacroExpander::replaceMacroParams(const Macro& macro,
                                        const std::vector<MacroArg>& args,
                                        std::vector<Token>* replacements)
 {
-    for (size_t i = 0; i < macro.replacements.size(); ++i)
+    for (std::size_t i = 0; i < macro.replacements.size(); ++i)
     {
         const Token& repl = macro.replacements[i];
         if (repl.type != Token::IDENTIFIER)
@@ -350,13 +351,13 @@ void MacroExpander::replaceMacroParams(const Macro& macro,
             continue;
         }
 
-        size_t iArg = std::distance(macro.parameters.begin(), iter);
+        std::size_t iArg = std::distance(macro.parameters.begin(), iter);
         const MacroArg& arg = args[iArg];
         if (arg.empty())
         {
             continue;
         }
-        size_t iRepl = replacements->size();
+        std::size_t iRepl = replacements->size();
         replacements->insert(replacements->end(), arg.begin(), arg.end());
         // The replacement token inherits padding properties from
         // macro replacement token.
