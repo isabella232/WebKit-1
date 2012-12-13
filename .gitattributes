@@ -20,7 +20,6 @@ objc/*.h diff=objcppheader
 
 *.vcproj eol=crlf
 *.vsprops eol=crlf
-*.sln eol=crlf
 
 # For best performance, place rules for deep paths in the parent directory.
 # For example: instead of "Source/WebCore/inspector/Inspector.json -crlf" here,
