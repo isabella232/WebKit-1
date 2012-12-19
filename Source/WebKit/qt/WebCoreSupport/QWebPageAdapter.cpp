@@ -634,6 +634,8 @@ bool QWebPageAdapter::performDrag(const QMimeData *data, const QPoint &pos, Qt::
     return page->dragController()->performDrag(&dragData);
 }
 
+#endif // QT_NO_DRAGANDDROP
+
 void QWebPageAdapter::inputMethodEvent(QInputMethodEvent *ev)
 {
     WebCore::Frame *frame = page->focusController()->focusedOrMainFrame();
@@ -857,7 +859,6 @@ void QWebPageAdapter::dynamicPropertyChangeEvent(QObject* obj, QDynamicPropertyC
     }
 }
 
-#endif // QT_NO_DRAGANDDROP
 
 #define MAP_ACTION_FROM_VALUE(Name, Value) \
     case Value: return QWebPageAdapter::Name
@@ -1433,6 +1434,7 @@ bool QWebPageAdapter::touchEvent(QTouchEvent* event)
 #endif
 }
 
+#ifndef QT_NO_CONTEXTMENU
 bool QWebPageAdapter::swallowContextMenuEvent(QContextMenuEvent *event, QWebFrameAdapter *webFrame)
 {
     // Check the first and last enum values match at least, since we cast.
@@ -1476,3 +1478,4 @@ bool QWebPageAdapter::swallowContextMenuEvent(QContextMenuEvent *event, QWebFram
 
     return !menu;
 }
+#endif

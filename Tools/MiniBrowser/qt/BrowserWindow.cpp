@@ -182,6 +182,7 @@ void BrowserWindow::keyPressEvent(QKeyEvent* event)
     QQuickView::keyPressEvent(event);
 }
 
+#ifndef QT_NO_WHEELEVENT
 void BrowserWindow::wheelEvent(QWheelEvent* event)
 {
     if (event->modifiers() & Qt::ControlModifier && event->orientation() == Qt::Vertical) {
@@ -195,3 +196,4 @@ void BrowserWindow::wheelEvent(QWheelEvent* event)
     }
     QQuickView::wheelEvent(event);
 }
+#endif

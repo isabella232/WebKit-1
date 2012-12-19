@@ -242,7 +242,9 @@ public:
         QString subMenuTitle;
     };
     virtual void createAndSetCurrentContextMenu(const QList<MenuItemDescription>&, QBitArray*) = 0;
+#ifndef QT_NO_CONTEXTMENU
     virtual bool handleScrollbarContextMenuEvent(QContextMenuEvent*, bool, ScrollDirection*, ScrollGranularity*) = 0;
+#endif
 
     static QWebPageAdapter* kit(WebCore::Page*);
     WebCore::ViewportArguments viewportArguments() const;
@@ -300,7 +302,9 @@ public:
     bool handleShortcutOverrideEvent(QKeyEvent*);
     // Returns whether the default action was cancelled in the JS event handler
     bool touchEvent(QTouchEvent*);
+#ifndef QT_NO_CONTEXTMENU
     bool swallowContextMenuEvent(QContextMenuEvent *, QWebFrameAdapter*);
+#endif
 
     QWebHitTestResultPrivate* updatePositionDependentMenuActions(const QPoint&, QBitArray*);
     void updateActionInternal(MenuAction, const char* commandName, bool* enabled, bool* checked);

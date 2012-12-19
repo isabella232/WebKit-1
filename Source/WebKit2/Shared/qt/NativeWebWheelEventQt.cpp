@@ -28,6 +28,8 @@
 
 #include "WebEventFactoryQt.h"
 
+#ifndef QT_NO_WHEELEVENT
+
 namespace WebKit {
 
 NativeWebWheelEvent::NativeWebWheelEvent(QWheelEvent* event, const QTransform& fromItemTransform)
@@ -37,3 +39,5 @@ NativeWebWheelEvent::NativeWebWheelEvent(QWheelEvent* event, const QTransform& f
 }
 
 } // namespace WebKit
+
+#endif

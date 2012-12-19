@@ -28,6 +28,7 @@ class QWebFrame;
 class QWebPage;
 class QWebView;
 
+#ifndef QT_NO_ACCESSIBILITY
 /*
  * Classes representing accessible objects for View, Frame and Page.
  *
@@ -78,5 +79,7 @@ public:
     int childCount() const;
     QAccessibleInterface* child(int index) const;
 };
+
+#endif
 
 #endif

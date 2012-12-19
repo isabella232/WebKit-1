@@ -49,7 +49,7 @@ public:
     NativeWebWheelEvent(NSEvent *, NSView *);
 #elif PLATFORM(WIN)
     NativeWebWheelEvent(HWND, UINT message, WPARAM, LPARAM);
-#elif PLATFORM(QT)
+#elif PLATFORM(QT) && !defined(QT_NO_WHEELEVENT)
     explicit NativeWebWheelEvent(QWheelEvent*, const QTransform& fromItemTransform);
 #elif PLATFORM(GTK)
     NativeWebWheelEvent(const NativeWebWheelEvent&);
@@ -63,7 +63,7 @@ public:
 #elif PLATFORM(WIN)
     const MSG* nativeEvent() const { return &m_nativeEvent; }
 #elif PLATFORM(QT)
-    const QWheelEvent* nativeEvent() const { return m_nativeEvent; }
+    const QEvent* nativeEvent() const { return m_nativeEvent; }
 #elif PLATFORM(GTK)
     const GdkEvent* nativeEvent() const { return m_nativeEvent.get(); }
 #elif PLATFORM(EFL)
@@ -76,7 +76,7 @@ private:
 #elif PLATFORM(WIN)
     MSG m_nativeEvent;
 #elif PLATFORM(QT)
-    QWheelEvent* m_nativeEvent;
+    QEvent* m_nativeEvent;
 #elif PLATFORM(GTK)
     GOwnPtr<GdkEvent> m_nativeEvent;
 #elif PLATFORM(EFL)

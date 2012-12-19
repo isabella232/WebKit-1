@@ -542,7 +542,7 @@ void QWebPagePrivate::createAndSetCurrentContextMenu(const QList<MenuItemDescrip
 
     currentContextMenu = createContextMenu(q, items, visitedWebActions);
 #else
-    Q_UNUSED(menuDescription);
+    Q_UNUSED(items);
     Q_UNUSED(visitedWebActions);
 #endif // QT_NO_CONTEXTMENU
 }
@@ -644,7 +644,7 @@ void QWebPagePrivate::createWebInspector(QObject** inspectorView, QWebPageAdapte
     *inspectorPage = page->d;
 }
 
-#ifndef QT_NO_MENU
+#if !defined(QT_NO_MENU) && !defined(QT_NO_CONTEXTMENU)
 static QStringList iterateContextMenu(QMenu* menu)
 {
     if (!menu)
@@ -666,7 +666,7 @@ static QStringList iterateContextMenu(QMenu* menu)
 
 QStringList QWebPagePrivate::menuActionsAsText()
 {
-#ifndef QT_NO_MENU
+#if !defined(QT_NO_MENU) && !defined(QT_NO_CONTEXTMENU)
     return iterateContextMenu(currentContextMenu.data());
 #else
     return QStringList();

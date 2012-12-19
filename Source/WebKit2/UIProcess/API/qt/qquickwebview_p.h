@@ -184,14 +184,18 @@ protected:
     virtual void mouseMoveEvent(QMouseEvent*);
     virtual void mouseReleaseEvent(QMouseEvent *);
     virtual void mouseDoubleClickEvent(QMouseEvent*);
+#ifndef QT_NO_WHEELEVENT
     virtual void wheelEvent(QWheelEvent*);
+#endif
     virtual void hoverEnterEvent(QHoverEvent*);
     virtual void hoverMoveEvent(QHoverEvent*);
     virtual void hoverLeaveEvent(QHoverEvent*);
+#ifndef QT_NO_DRAGANDDROP
     virtual void dragMoveEvent(QDragMoveEvent*);
     virtual void dragEnterEvent(QDragEnterEvent*);
     virtual void dragLeaveEvent(QDragLeaveEvent*);
     virtual void dropEvent(QDropEvent*);
+#endif
     virtual bool event(QEvent*);
 
 private:

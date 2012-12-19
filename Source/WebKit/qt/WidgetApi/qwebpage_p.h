@@ -137,7 +137,9 @@ public:
     virtual QtPluginWidgetAdapter* adapterForWidget(QObject *) const OVERRIDE;
     virtual bool requestSoftwareInputPanel() const OVERRIDE;
     virtual void createAndSetCurrentContextMenu(const QList<MenuItemDescription>&, QBitArray*) OVERRIDE;
+#ifndef QT_NO_CONTEXTMENU
     virtual bool handleScrollbarContextMenuEvent(QContextMenuEvent*, bool, ScrollDirection*, ScrollGranularity*) OVERRIDE;
+#endif
 
 
     void createMainFrame();

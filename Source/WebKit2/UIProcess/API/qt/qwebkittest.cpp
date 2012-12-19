@@ -114,6 +114,7 @@ bool QWebKitTest::touchDoubleTap(QObject* item, qreal x, qreal y, int delay)
     return true;
 }
 
+#ifndef QT_NO_WHEELEVENT
 bool QWebKitTest::wheelEvent(QObject* item, qreal x, qreal y, int delta, Qt::Orientation orient)
 {
     QQuickWebView* window = qobject_cast<QQuickWebView*>(item);
@@ -131,6 +132,7 @@ bool QWebKitTest::wheelEvent(QObject* item, qreal x, qreal y, int delta, Qt::Ori
 
     return event.isAccepted();
 }
+#endif
 
 QSize QWebKitTest::contentsSize() const
 {

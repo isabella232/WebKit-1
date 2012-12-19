@@ -78,7 +78,9 @@ EventSender::EventSender(QWebPage* parent)
     m_page->view()->installEventFilter(this);
     // This is a hack that works because we normally scroll 60 pixels (3*20) per tick, but Apple scrolls 120.
     // But Apple also has a bug where they report lines instead of ticks in PlatformWheelEvent, making 2 lines = 40 pixels match.
+#ifndef QT_NO_WHEELEVENT
     QApplication::setWheelScrollLines(2);
+#endif
 }
 
 static Qt::KeyboardModifiers getModifiers(const QStringList& modifiers)
@@ -190,8 +192,11 @@ void EventSender::mouseUp(int button)
     if (m_currentDragData.urls().isEmpty())
         return;
 
+#ifndef QT_NO_DRAGANDDROP
     event = new QDropEvent(m_mousePos, m_currentDragActionsAllowed, &m_currentDragData, m_mouseButtons, Qt::NoModifier);
     sendEvent(m_page, event);
+#endif
+
     m_currentDragData.clear();
 }
 
@@ -214,11 +219,14 @@ void EventSender::mouseMoveTo(int x, int y)
     if (m_currentDragData.urls().isEmpty())
         return;
 
+#ifndef QT_NO_DRAGANDDROP
     Qt::MouseButtons mouseButtons = m_mouseButtons | Qt::LeftButton;
     event = new QDragMoveEvent(m_mousePos, m_currentDragActionsAllowed, &m_currentDragData, mouseButtons, Qt::NoModifier);
     sendEvent(m_page, event);
+#endif
 }
 
+#ifndef QT_NO_DRAGANDDROP
 // Simulates a mouse down event for drag without sending an actual mouse down event.
 void EventSender::beginDragWithFiles(const QStringList& files)
 {
@@ -232,10 +240,12 @@ void EventSender::beginDragWithFiles(const QStringList& files)
 
     m_currentDragData.setUrls(fileUrls);
     m_currentDragActionsAllowed = Qt::CopyAction;
+
     Qt::MouseButtons mouseButtons = m_mouseButtons | Qt::LeftButton;
     QDragEnterEvent* event = new QDragEnterEvent(m_mousePos, m_currentDragActionsAllowed, &m_currentDragData, mouseButtons, Qt::NoModifier);
     sendEvent(m_page, event);
 }
+#endif
 
 #ifndef QT_NO_WHEELEVENT
 void EventSender::mouseScrollBy(int ticksX, int ticksY)
@@ -413,6 +423,7 @@ void EventSender::keyDown(const QString& string, const QStringList& modifiers, u
     sendEvent(m_page, &event2);
 }
 
+#ifndef QT_NO_CONTEXTMENU
 QStringList EventSender::contextClick()
 {
     QMouseEvent event(QEvent::MouseButtonPress, m_mousePos, Qt::RightButton, Qt::RightButton, Qt::NoModifier);
@@ -433,6 +444,7 @@ QStringList EventSender::contextClick()
     }
     return DumpRenderTreeSupportQt::contextMenu(m_page->handle());
 }
+#endif
 
 void EventSender::scheduleAsynchronousClick()
 {

@@ -65,13 +65,17 @@ public:
     void handleMouseMoveEvent(QMouseEvent*);
     void handleMousePressEvent(QMouseEvent*);
     void handleMouseReleaseEvent(QMouseEvent*);
+#ifndef QT_NO_WHEELEVENT
     void handleWheelEvent(QWheelEvent*);
+#endif
     void handleHoverLeaveEvent(QHoverEvent*);
     void handleHoverMoveEvent(QHoverEvent*);
+#ifndef QT_NO_DRAGANDDROP
     void handleDragEnterEvent(QDragEnterEvent*);
     void handleDragLeaveEvent(QDragLeaveEvent*);
     void handleDragMoveEvent(QDragMoveEvent*);
     void handleDropEvent(QDropEvent*);
+#endif
     void handleInputMethodEvent(QInputMethodEvent*);
     void handleTouchEvent(QTouchEvent*);
 

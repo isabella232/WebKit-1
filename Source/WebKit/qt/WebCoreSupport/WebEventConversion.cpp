@@ -120,6 +120,7 @@ PlatformMouseEvent convertMouseEvent(QInputEvent* event, int clickCount)
     return WebKitPlatformMouseEvent(event, clickCount);
 }
 
+#ifndef QT_NO_WHEELEVENT
 class WebKitPlatformWheelEvent : public PlatformWheelEvent {
 public:
     WebKitPlatformWheelEvent(QWheelEvent*, int wheelScrollLines);
@@ -157,6 +158,7 @@ WebKitPlatformWheelEvent::WebKitPlatformWheelEvent(QWheelEvent* e, int wheelScro
     m_directionInvertedFromDevice = false;
     applyDelta(e->delta(), e->orientation(), wheelScrollLines);
 }
+#endif
 
 #if ENABLE(TOUCH_EVENTS)
 class WebKitPlatformTouchEvent : public PlatformTouchEvent {
@@ -269,10 +271,12 @@ WebKitPlatformGestureEvent::WebKitPlatformGestureEvent(QGestureEventFacade* even
 
 #endif
 
+#ifndef QT_NO_WHEELEVENT
 PlatformWheelEvent convertWheelEvent(QWheelEvent* event, int wheelScrollLines)
 {
     return WebKitPlatformWheelEvent(event, wheelScrollLines);
 }
+#endif
 
 #if ENABLE(TOUCH_EVENTS)
 PlatformTouchEvent convertTouchEvent(QTouchEvent* event)

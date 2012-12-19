@@ -52,7 +52,9 @@ public:
     WebViewTraditional(QWidget* parent) : QWebView(parent) {}
 
 protected:
+#ifndef QT_NO_CONTEXTMENU
     virtual void contextMenuEvent(QContextMenuEvent*);
+#endif
     virtual void mousePressEvent(QMouseEvent*);
 };
 

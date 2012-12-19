@@ -110,8 +110,11 @@ private Q_SLOTS:
     void initTestCase();
     void cleanupTestCase();
     void thirdPartyCookiePolicy();
+#ifndef QT_NO_CONTEXTMENU
     void contextMenuCopy();
     void contextMenuPopulatedOnce();
+    void contextMenuCrash();
+#endif
     void acceptNavigationRequest();
     void geolocationRequestJS();
     void loadFinished();
@@ -123,7 +126,6 @@ private Q_SLOTS:
     void userStyleSheetFromQrcUrl();
     void loadHtml5Video();
     void modified();
-    void contextMenuCrash();
     void updatePositionDependentActionsCrash();
     void database();
     void createPluginWithPluginsEnabled();
@@ -643,25 +645,6 @@ void tst_QWebPage::updatePositionDependentActionsCrash()
             break;
     }
     QVERIFY(!contextMenu);
-}
-
-// https://bugs.webkit.org/show_bug.cgi?id=20357
-void tst_QWebPage::contextMenuCrash()
-{
-    QWebView view;
-    view.setHtml("<p>test");
-    QPoint pos(0, 0);
-    QContextMenuEvent event(QContextMenuEvent::Mouse, pos);
-    view.page()->swallowContextMenuEvent(&event);
-    view.page()->updatePositionDependentActions(pos);
-    QMenu* contextMenu = 0;
-    foreach (QObject* child, view.children()) {
-        contextMenu = qobject_cast<QMenu*>(child);
-        if (contextMenu)
-            break;
-    }
-    QVERIFY(contextMenu);
-    delete contextMenu;
 }
 
 void tst_QWebPage::database()
@@ -3073,6 +3056,27 @@ void tst_QWebPage::macCopyUnicodeToClipboard()
 }
 #endif
 
+#ifndef QT_NO_CONTEXTMENU
+
+// https://bugs.webkit.org/show_bug.cgi?id=20357
+void tst_QWebPage::contextMenuCrash()
+{
+    QWebView view;
+    view.setHtml("<p>test");
+    QPoint pos(0, 0);
+    QContextMenuEvent event(QContextMenuEvent::Mouse, pos);
+    view.page()->swallowContextMenuEvent(&event);
+    view.page()->updatePositionDependentActions(pos);
+    QMenu* contextMenu = 0;
+    foreach (QObject* child, view.children()) {
+        contextMenu = qobject_cast<QMenu*>(child);
+        if (contextMenu)
+            break;
+    }
+    QVERIFY(contextMenu);
+    delete contextMenu;
+}
+
 void tst_QWebPage::contextMenuCopy()
 {
     QWebView view;
@@ -3124,6 +3128,7 @@ void tst_QWebPage::contextMenuPopulatedOnce()
         entries << entry;
     }
 }
+#endif
 
 void tst_QWebPage::deleteQWebViewTwice()
 {

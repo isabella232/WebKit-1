@@ -127,6 +127,7 @@ WebMouseEvent WebEventFactory::createWebMouseEvent(QMouseEvent* event, const QTr
     return WebMouseEvent(type, button, fromItemTransform.map(event->localPos()).toPoint(), event->screenPos().toPoint(), deltaX, deltaY, 0.0f, clickCount, modifiers, timestamp);
 }
 
+#ifndef QT_NO_WHEELEVENT
 WebWheelEvent WebEventFactory::createWebWheelEvent(QWheelEvent* e, const QTransform& fromItemTransform)
 {
     float deltaX                            = 0;
@@ -161,6 +162,7 @@ WebWheelEvent WebEventFactory::createWebWheelEvent(QWheelEvent* e, const QTransf
     FloatSize wheelTicks(wheelTicksX, wheelTicksY);
     return WebWheelEvent(WebEvent::Wheel, transformedPoint, globalPoint, transformedDelta, wheelTicks, granularity, modifiers, timestamp);
 }
+#endif
 
 WebKeyboardEvent WebEventFactory::createWebKeyboardEvent(QKeyEvent* event)
 {

@@ -68,7 +68,9 @@ public Q_SLOTS:
     void leapForward(int ms);
     void keyDown(const QString& string, const QStringList& modifiers = QStringList(), unsigned int location = 0);
     void clearKillRing() {}
+#ifndef QT_NO_CONTEXTMENU
     QStringList contextClick();
+#endif
     void scheduleAsynchronousClick();
     void addTouchPoint(int x, int y);
     void updateTouchPoint(int index, int x, int y);
@@ -90,7 +92,9 @@ public Q_SLOTS:
     void gestureTap(int x, int y);
     void gestureLongPress(int x, int y);
 #endif
+#ifndef QT_NO_DRAGANDDROP
     void beginDragWithFiles(const QStringList& files);
+#endif
 
 protected:
     void timerEvent(QTimerEvent*);

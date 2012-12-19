@@ -286,10 +286,12 @@ void GraphicsWebView::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
     delete menu;
 }
 
+#ifndef QT_NO_CONTEXTMENU
 void WebViewTraditional::contextMenuEvent(QContextMenuEvent* event)
 {
     QMenu* menu = createContextMenu(page(), event->pos());
     menu->exec(event->globalPos());
     delete menu;
 }
+#endif
 

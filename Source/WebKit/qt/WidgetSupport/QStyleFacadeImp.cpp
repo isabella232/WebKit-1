@@ -340,6 +340,7 @@ void QStyleFacadeImp::paintSliderThumb(QPainter* painter, const QStyleFacadeOpti
 
 void QStyleFacadeImp::paintInnerSpinButton(QPainter* painter, const QStyleFacadeOption& proxyOption, bool spinBoxUp)
 {
+#ifndef QT_NO_SPINBOX
     QWidget* widget = qobject_cast<QWidget*>(widgetForPainter(painter));
 
     MappedStyleOption<QStyleOptionSpinBox> option(widget, proxyOption);
@@ -379,6 +380,7 @@ void QStyleFacadeImp::paintInnerSpinButton(QPainter* painter, const QStyleFacade
     option.rect = buttonRect;
 
     style()->drawComplexControl(QStyle::CC_SpinBox, &option, painter, widget);
+#endif
 }
 
 void QStyleFacadeImp::paintProgressBar(QPainter* painter, const QStyleFacadeOption& proxyOption, double progress, double animationProgress)

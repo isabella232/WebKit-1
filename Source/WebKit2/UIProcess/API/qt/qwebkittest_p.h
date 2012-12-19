@@ -53,7 +53,9 @@ Q_SIGNALS:
 public Q_SLOTS:
     bool touchTap(QObject* item, qreal x, qreal y, int delay = -1);
     bool touchDoubleTap(QObject* item, qreal x, qreal y, int delay = -1);
+#ifndef QT_NO_WHEELEVENT
     bool wheelEvent(QObject* item, qreal x, qreal y, int delta, Qt::Orientation orient = Qt::Vertical);
+#endif
 
 public:
     QWebKitTest(QQuickWebViewPrivate* webviewPrivate, QObject* parent = 0);

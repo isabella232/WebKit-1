@@ -1842,11 +1842,13 @@ void QQuickWebView::mouseDoubleClickEvent(QMouseEvent* event)
     d->handleMouseEvent(event);
 }
 
+#ifndef QT_NO_WHEELEVENT
 void QQuickWebView::wheelEvent(QWheelEvent* event)
 {
     Q_D(QQuickWebView);
     d->pageView->eventHandler()->handleWheelEvent(event);
 }
+#endif
 
 void QQuickWebView::hoverEnterEvent(QHoverEvent* event)
 {
@@ -1867,6 +1869,7 @@ void QQuickWebView::hoverLeaveEvent(QHoverEvent* event)
     d->pageView->eventHandler()->handleHoverLeaveEvent(event);
 }
 
+#ifndef QT_NO_DRAGANDDROP
 void QQuickWebView::dragMoveEvent(QDragMoveEvent* event)
 {
     Q_D(QQuickWebView);
@@ -1890,6 +1893,7 @@ void QQuickWebView::dropEvent(QDropEvent* event)
     Q_D(QQuickWebView);
     d->pageView->eventHandler()->handleDropEvent(event);
 }
+#endif
 
 bool QQuickWebView::event(QEvent* ev)
 {

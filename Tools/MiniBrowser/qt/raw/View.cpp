@@ -109,7 +109,9 @@ void View::viewNeedsDisplay(const QRect&)
 
 void View::viewRequestedCursorOverride(const QCursor& cursor)
 {
+#ifndef QT_NO_CURSOR
     QGuiApplication::setOverrideCursor(cursor);
+#endif
 }
 
 void View::doneWithKeyEvent(const QKeyEvent* event, bool wasHandled)

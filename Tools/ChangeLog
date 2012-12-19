@@ -1,3 +1,38 @@
+2012-12-19  Milian Wolff  <milian.wolff@kdab.com>
+
+        [Qt] Compile fixes for minimal qtbase configuration
+        https://bugs.webkit.org/show_bug.cgi?id=105425
+
+        Reviewed by NOBODY (OOPS!).
+
+        Fix compilation of QtWebKit when QtBase was configured with the
+        following flags set:
+
+        QT_NO_DRAGANDDROP
+        QT_NO_CONTEXTMENU
+        QT_NO_WHEELEVENT    
+        QT_NO_ACCESSIBILITY
+        QT_NO_SPINBOX
+        QT_NO_STYLE_STYLESHEET
+        QT_NO_CURSOR
+
+        * DumpRenderTree/qt/EventSenderQt.cpp:
+        (EventSender::EventSender):
+        (EventSender::mouseUp):
+        (EventSender::mouseMoveTo):
+        (EventSender::beginDragWithFiles):
+        * DumpRenderTree/qt/EventSenderQt.h:
+        (EventSender):
+        * MiniBrowser/qt/BrowserWindow.cpp:
+        * MiniBrowser/qt/BrowserWindow.h:
+        (BrowserWindow):
+        * MiniBrowser/qt/raw/View.cpp:
+        (View::viewRequestedCursorOverride):
+        * QtTestBrowser/webview.cpp:
+        * QtTestBrowser/webview.h:
+        (WebViewTraditional):
+        * qmake/mkspecs/features/features.prf:
+
 2012-12-19  Zeno Albisser  <zeno@webkit.org>
 
         [Qt][Mac] run-launcher cannot find Qt5WebKitWidgets.

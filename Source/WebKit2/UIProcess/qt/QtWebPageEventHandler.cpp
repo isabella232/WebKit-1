@@ -157,11 +157,13 @@ void QtWebPageEventHandler::handleMouseReleaseEvent(QMouseEvent* ev)
     m_webPageProxy->handleMouseEvent(NativeWebMouseEvent(ev, fromItemTransform, /*eventClickCount*/ 0));
 }
 
+#ifndef QT_NO_WHEELEVENT
 void QtWebPageEventHandler::handleWheelEvent(QWheelEvent* ev)
 {
     QTransform fromItemTransform = m_webPage->transformFromItem();
     m_webPageProxy->handleWheelEvent(NativeWebWheelEvent(ev, fromItemTransform));
 }
+#endif
 
 void QtWebPageEventHandler::handleHoverLeaveEvent(QHoverEvent* ev)
 {
@@ -182,6 +184,7 @@ void QtWebPageEventHandler::handleHoverMoveEvent(QHoverEvent* ev)
     handleMouseMoveEvent(&me);
 }
 
+#ifndef QT_NO_DRAGANDDROP
 void QtWebPageEventHandler::handleDragEnterEvent(QDragEnterEvent* ev)
 {
     m_webPageProxy->resetDragOperation();
@@ -233,6 +236,7 @@ void QtWebPageEventHandler::handleDropEvent(QDropEvent* ev)
 
     ev->setAccepted(accepted);
 }
+#endif
 
 void QtWebPageEventHandler::activateTapHighlight(const QTouchEvent::TouchPoint& point)
 {
@@ -609,6 +613,7 @@ void QtWebPageEventHandler::didFindZoomableArea(const IntPoint& target, const In
 
 void QtWebPageEventHandler::startDrag(const WebCore::DragData& dragData, PassRefPtr<ShareableBitmap> dragImage)
 {
+#ifndef QT_NO_DRAGANDDROP
     QImage dragQImage;
     if (dragImage)
         dragQImage = dragImage->createQImage();
@@ -633,6 +638,7 @@ void QtWebPageEventHandler::startDrag(const WebCore::DragData& dragData, PassRef
     }
 
     m_webPageProxy->dragEnded(clientPosition, globalPosition, dropActionToDragOperation(actualDropAction));
+#endif
 }
 
 } // namespace WebKit

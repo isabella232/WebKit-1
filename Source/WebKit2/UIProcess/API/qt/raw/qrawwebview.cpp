@@ -229,7 +229,9 @@ void QRawWebViewPrivate::didChangeContentsSize(const WebCore::IntSize& newSize)
 
 void QRawWebViewPrivate::setCursor(const WebCore::Cursor& cursor)
 {
+#ifndef QT_NO_CURSOR
     m_client->viewRequestedCursorOverride(*cursor.platformCursor());
+#endif
 }
 
 #if ENABLE(TOUCH_EVENTS)
@@ -397,10 +399,12 @@ void QRawWebView::sendMouseEvent(QMouseEvent* event, int clickCount)
     d->m_webPageProxy->handleMouseEvent(WebKit::NativeWebMouseEvent(event, QTransform(), clickCount));
 }
 
+#ifndef QT_NO_WHEELEVENT
 void QRawWebView::sendWheelEvent(QWheelEvent* event)
 {
     d->m_webPageProxy->handleWheelEvent(WebKit::NativeWebWheelEvent(event, QTransform()));
 }
+#endif
 
 void QRawWebView::sendTouchEvent(QTouchEvent* event)
 {

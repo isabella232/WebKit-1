@@ -157,7 +157,9 @@ void QtPageClient::handleProxyAuthenticationRequiredRequest(const String& hostna
 void QtPageClient::setCursor(const WebCore::Cursor& cursor)
 {
     // FIXME: This is a temporary fix until we get cursor support in QML items.
+#ifndef QT_NO_CURSOR
     QGuiApplication::setOverrideCursor(*cursor.platformCursor());
+#endif
 }
 
 void QtPageClient::setCursorHiddenUntilMouseMoves(bool hiddenUntilMouseMoves)

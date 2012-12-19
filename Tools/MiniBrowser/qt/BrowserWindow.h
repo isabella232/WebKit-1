@@ -64,7 +64,9 @@ private:
     void zoomOut();
 
     virtual void keyPressEvent(QKeyEvent*);
+#ifndef QT_NO_WHEELEVENT
     virtual void wheelEvent(QWheelEvent*);
+#endif
 
     WindowOptions* m_windowOptions;
     QVector<qreal> m_zoomLevels;
