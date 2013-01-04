@@ -1,3 +1,18 @@
+2013-01-04  Milian Wolff  <milian.wolff@kdab.com>
+
+        [Qt] Fix compilation when WebKit1 is disabled but Qt widgets are available
+        https://bugs.webkit.org/show_bug.cgi?id=106094
+
+        Do not try to use Qt widgets or WebKit1 features if WebKit1 is disabled.
+        This also disabled the raw MiniBrowser which relies on WebKit1.
+
+        Reviewed by NOBODY (OOPS!).
+
+        * WebProcess.pro:
+        * qt/MainQt.cpp:
+        (WebKit):
+        (main):
+
 2013-01-04  Carlos Garcia Campos  <cgarcia@igalia.com>
 
         [GTK][Qt] Make compositing messages async again

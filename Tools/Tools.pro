@@ -18,7 +18,7 @@ build?(webkit2) {
 
     build?(minibrowser) {
         have?(QTQUICK): SUBDIRS += MiniBrowser/qt/MiniBrowser.pro
-        SUBDIRS += MiniBrowser/qt/raw/MiniBrowserRaw.pro
+        build?(webkit1): SUBDIRS += MiniBrowser/qt/raw/MiniBrowserRaw.pro
     }
 }
 

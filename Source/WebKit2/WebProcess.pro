@@ -14,9 +14,10 @@ SOURCES += qt/MainQt.cpp
 QT += network webkit
 macx: QT += xml
 
-haveQtModule(widgets): QT += widgets webkitwidgets
-
-build?(webkit1): DEFINES += HAVE_WEBKIT1
+build?(webkit1) {
+    QT += webkitwidgets widgets
+    DEFINES += HAVE_WEBKIT1
+}
 
 INSTALLS += target
 

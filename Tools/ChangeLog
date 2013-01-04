@@ -1,3 +1,13 @@
+2013-01-04  Milian Wolff  <milian.wolff@kdab.com>
+
+        [Qt] Fix compilation when WebKit1 is disabled but Qt widgets are available
+        https://bugs.webkit.org/show_bug.cgi?id=106094
+
+        Do not try to use Qt widgets or WebKit1 features if WebKit1 is disabled.
+        This also disabled the raw MiniBrowser which relies on WebKit1.
+
+        * Tools.pro:
+
 2013-01-04  Sailesh Agrawal  <sail@chromium.org>
 
         [Mac] [WK2] platform/mac/fast/events/numpad-keycode-mapping.html fails

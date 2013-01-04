@@ -26,7 +26,7 @@
 
 #include <qglobal.h>
 
-#if defined(QT_NO_WIDGETS)
+#if !defined(HAVE_WEBKIT1)
 #include <QGuiApplication>
 typedef QGuiApplication ApplicationType;
 #else
@@ -42,7 +42,7 @@ typedef QApplication ApplicationType;
 
 namespace WebKit {
 Q_DECL_IMPORT int WebProcessMainQt(QGuiApplication*);
-#if !defined(QT_NO_WIDGETS)
+#if defined(HAVE_WEBKIT1)
 Q_DECL_IMPORT void initializeWebKitWidgets();
 #endif
 }
@@ -92,7 +92,7 @@ int main(int argc, char** argv)
     // the standard pixmaps can be fetched from the style.
     ApplicationType* appInstance = new ApplicationType(argc, argv);
 
-#if !defined(QT_NO_WIDGETS)
+#if defined(HAVE_WEBKIT1)
     if (qgetenv("QT_WEBKIT_THEME_NAME") == "qstyle")
         WebKit::initializeWebKitWidgets();
 #endif
