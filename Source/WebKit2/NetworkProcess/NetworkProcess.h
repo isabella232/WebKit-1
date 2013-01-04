@@ -28,7 +28,6 @@
 
 #if ENABLE(NETWORK_PROCESS)
 
-#include "AuthenticationManager.h"
 #include "CacheModel.h"
 #include "ChildProcess.h"
 #include "DownloadManager.h"
@@ -42,14 +41,30 @@ namespace WebCore {
 
 namespace WebKit {
 
+class AuthenticationManager;
 class NetworkConnectionToWebProcess;
+class NetworkProcessSupplement;
+class PlatformCertificateInfo;
 struct NetworkProcessCreationParameters;
 
-class NetworkProcess : ChildProcess, DownloadManager::Client {
+class NetworkProcess : public ChildProcess, DownloadManager::Client {
     WTF_MAKE_NONCOPYABLE(NetworkProcess);
 public:
     static NetworkProcess& shared();
 
+    template <typename T>
+    T* supplement()
+    {
+        return static_cast<T*>(m_supplements.get(T::supplementName()));
+    }
+
+    template <typename T>
+    void addSupplement()
+    {
+        m_supplements.add(T::supplementName(), new T(this));
+    }
+
+    void initializeSandbox(const String& clientIdentifier);
     void initialize(CoreIPC::Connection::Identifier, WebCore::RunLoop*);
 
     void removeNetworkConnectionToWebProcess(NetworkConnectionToWebProcess*);
@@ -66,6 +81,8 @@ private:
 
     // ChildProcess
     virtual bool shouldTerminate() OVERRIDE;
+    virtual CoreIPC::Connection* connection() const OVERRIDE { return m_uiConnection.get(); }
+    virtual uint64_t destinationID() const OVERRIDE { return 0; }
 
     // CoreIPC::Connection::Client
     virtual void didReceiveMessage(CoreIPC::Connection*, CoreIPC::MessageID, CoreIPC::MessageDecoder&) OVERRIDE;
@@ -88,10 +105,6 @@ private:
     void downloadRequest(uint64_t downloadID, const WebCore::ResourceRequest&);
     void cancelDownload(uint64_t downloadID);
     void setCacheModel(uint32_t);
-#if ENABLE(CUSTOM_PROTOCOLS)
-    void registerSchemeForCustomProtocol(const String&);
-    void unregisterSchemeForCustomProtocol(const String&);
-#endif
 
     void allowSpecificHTTPSCertificateForHost(const PlatformCertificateInfo&, const String& host);
 
@@ -100,8 +113,6 @@ private:
 
     // The connection to the UI process.
     RefPtr<CoreIPC::Connection> m_uiConnection;
-
-    CoreIPC::MessageReceiverMap m_messageReceiverMap;
 
     // Connections to WebProcesses.
     Vector<RefPtr<NetworkConnectionToWebProcess> > m_webProcessConnections;
@@ -112,7 +123,8 @@ private:
     bool m_hasSetCacheModel;
     CacheModel m_cacheModel;
 
-    AuthenticationManager m_downloadsAuthenticationManager;
+    typedef HashMap<AtomicString, NetworkProcessSupplement*> NetworkProcessSupplementMap;
+    NetworkProcessSupplementMap m_supplements;
 };
 
 } // namespace WebKit

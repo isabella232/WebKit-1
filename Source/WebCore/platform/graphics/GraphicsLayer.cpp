@@ -410,15 +410,6 @@ void GraphicsLayer::distributeOpacity(float accumulatedOpacity)
     }
 }
 
-#if PLATFORM(QT) || PLATFORM(GTK) || PLATFORM(EFL)
-GraphicsLayer::GraphicsLayerFactoryCallback* GraphicsLayer::s_graphicsLayerFactory = 0;
-
-void GraphicsLayer::setGraphicsLayerFactory(GraphicsLayer::GraphicsLayerFactoryCallback factory)
-{
-    s_graphicsLayerFactory = factory;
-}
-#endif
-
 #if ENABLE(CSS_FILTERS)
 static inline const FilterOperations* filterOperationsAt(const KeyframeValueList& valueList, size_t index)
 {
@@ -739,6 +730,8 @@ void GraphicsLayer::reportMemoryUsage(MemoryObjectInfo* memoryObjectInfo) const
     info.addMember(m_maskLayer);
     info.addMember(m_replicaLayer);
     info.addMember(m_replicatedLayer);
+    info.ignoreMember(m_client);
+    info.addMember(m_name);
 }
 
 } // namespace WebCore

@@ -49,6 +49,7 @@
       'ENABLE_CSS_IMAGE_RESOLUTION=0',
       'ENABLE_CSS_REGIONS=1',
       'ENABLE_CSS_SHADERS=1',
+      'ENABLE_CSS_TRANSFORMS_ANIMATIONS_TRANSITIONS_UNPREFIXED=0',
       'ENABLE_CSS_VARIABLES=1',
       'ENABLE_CSS_STICKY_POSITION=1',
       'ENABLE_CUSTOM_SCHEME_HANDLER=0',
@@ -234,7 +235,7 @@
           'WTF_USE_SKIA_ON_MAC_CHROMIUM=1',
         ],
       }],
-      ['use_x11==1', {
+      ['use_x11==1 or OS=="android"', {
         'feature_defines': [
           'WTF_USE_HARFBUZZ_NG=1',
         ],

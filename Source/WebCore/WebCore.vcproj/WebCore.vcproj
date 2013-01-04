@@ -32621,6 +32621,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\platform\network\NetworkStorageSession.h"
+					>
+				</File>
+				<File
 					RelativePath="..\platform\network\NetworkingContext.h"
 					>
 				</File>
@@ -32844,10 +32848,6 @@
 						</FileConfiguration>
 					</File>
 					<File
-						RelativePath="..\platform\network\cf\CookieStorageCFNet.h"
-						>
-					</File>
-					<File
 						RelativePath="..\platform\network\cf\CredentialStorageCFNet.cpp"
 						>
 						<FileConfiguration
@@ -32937,6 +32937,10 @@
 					</File>
 					<File
 						RelativePath="..\platform\network\cf\LoaderRunLoopCF.h"
+						>
+					</File>
+					<File
+						RelativePath="..\platform\network\cf\NetworkStorageSessionCFNet.cpp"
 						>
 					</File>
 					<File
@@ -54986,6 +54990,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\dom\TemplateContentDocumentFragment.h"
+				>
+			</File>
+			<File
 				RelativePath="..\dom\Text.cpp"
 				>
 				<FileConfiguration
@@ -76417,11 +76425,7 @@
 					>
 				</File>
 				<File
-					RelativePath="..\inspector\front-end\CSSCompletions.js"
-					>
-				</File>
-				<File
-					RelativePath="..\inspector\front-end\CSSKeywordCompletions.js"
+					RelativePath="..\inspector\front-end\CSSMetadata.js"
 					>
 				</File>
 				<File
@@ -76470,6 +76474,10 @@
 				</File>
 				<File
 					RelativePath="..\inspector\front-end\DebuggerScriptMapping.js"
+					>
+				</File>
+				<File
+					RelativePath="..\inspector\front-end\DefaultScriptMapping.js"
 					>
 				</File>
 				<File
@@ -76721,6 +76729,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\inspector\front-end\JSHeapSnapshot.js"
+					>
+				</File>
+				<File
 					RelativePath="..\inspector\front-end\JavaScriptFormatter.js"
 					>
 				</File>
@@ -76745,6 +76757,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\inspector\front-end\LiveEditSupport.js"
+					>
+				</File>
+				<File
 					RelativePath="..\inspector\front-end\MetricsSidebarPane.js"
 					>
 				</File>
@@ -76754,6 +76770,10 @@
 				</File>
 				<File
 					RelativePath="..\inspector\front-end\nativeMemoryProfiler.css"
+					>
+				</File>
+				<File
+					RelativePath="..\inspector\front-end\NativeHeapGraph.js"
 					>
 				</File>
 				<File
@@ -77094,6 +77114,10 @@
 				</File>
 				<File
 					RelativePath="..\inspector\front-end\SourceJavaScriptTokenizer.js"
+					>
+				</File>
+				<File
+					RelativePath="..\inspector\front-end\SourceMap.js"
 					>
 				</File>
 				<File

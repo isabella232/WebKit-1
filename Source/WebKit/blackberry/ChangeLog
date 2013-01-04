@@ -1,3 +1,244 @@
+2013-01-02  Jacky Jiang  <zhajiang@rim.com>
+
+        [BlackBerry] file:/// pages don't get correct scales after several rotations and history navigations
+        https://bugs.webkit.org/show_bug.cgi?id=105996
+
+        Reviewed by George Staikos.
+
+        PR: 273541
+        When navigating back to the previous page on portrait mode, we were
+        trying to set virtual viewport after recalculation. However, we didn't
+        change the fixed layout size so that we still layouted the contents at
+        the old virtual viewport size. In this case, the old virtual viewport
+        was 570 * 293 which was set in landscape mode unfortunately. There
+        would be no chance for such kind of contents size to fit the portrait
+        mode screen size nicely.
+        This was a regression of webkit/cc31d9bad where setViewMode() was
+        removed as a noop. So just get setViewMode() back to apply the fixed
+        layout size with a little bit change as SVG document path was proved
+        invalid in that patch. Thanks to George for the float comparison change.
+        Put a FIXME as we don't have a way to save the scale precisely before
+        the rotation and history navigation currently.
+
+        * Api/WebPage.cpp:
+        (BlackBerry::WebKit::WebPagePrivate::setLoadState):
+        * WebCoreSupport/FrameLoaderClientBlackBerry.cpp:
+        (WebCore::FrameLoaderClientBlackBerry::saveViewStateToItem):
+
+2013-01-02  Otto Derek Cheung  <otcheung@rim.com>
+
+        [BlackBerry] Do not determine db quota limit using db file size
+        https://bugs.webkit.org/show_bug.cgi?id=105991
+
+        PR 267191
+
+        Reviewed by George Staikos.
+
+        Passing the current quota to WebPageClientImpl::databaseQuota so we can determine a better
+        quota limit without using the db file size.
+
+        * Api/WebPageClient.h:
+        * WebCoreSupport/ChromeClientBlackBerry.cpp:
+        (WebCore::ChromeClientBlackBerry::exceededDatabaseQuota):
+
+2013-01-02  Yong Li  <yoli@rim.com>
+
+        [BlackBerry] Cached frame shouldn't access the page when being destroyed
+        https://bugs.webkit.org/show_bug.cgi?id=105942
+
+        Reviewed by George Staikos.
+
+        In order to prevent our FrameLoaderClient from dangling WebPagePrivate object in any case,
+        this patches clear the m_webPagePrivate pointer when the frame is detached or cached.
+
+        RIM PR# 272137.
+
+        * WebCoreSupport/FrameLoaderClientBlackBerry.cpp:
+        (WebCore::FrameLoaderClientBlackBerry::isMainFrame):
+        (WebCore::FrameLoaderClientBlackBerry::detachedFromParent2):
+        (WebCore::FrameLoaderClientBlackBerry::didSaveToPageCache):
+        (WebCore::FrameLoaderClientBlackBerry::didRestoreFromPageCache):
+
+2013-01-02  Nima Ghanavatian  <nghanavatian@rim.com>
+
+        [BlackBerry] Use fatfingers result when checking for misspelled words
+        https://bugs.webkit.org/show_bug.cgi?id=105923
+
+        Reviewed by Yong Li.
+
+        PR270866
+        Currently we are using the raw touch point when checking to see if spell check
+        is required on a word. When tapping close to a boundary, the raw point can be
+        placed off but fatfingers moves the point onto the word. This causes the caret
+        to be placed on a word but no spell check request triggered.
+
+        Internally reviewed by Mike Fenton and Tiancheng Jiang
+
+        * WebKitSupport/TouchEventHandler.cpp:
+        (BlackBerry::WebKit::TouchEventHandler::handleTouchPoint):
+
+2012-12-28  Charles Wei  <charles.wei@torchmobile.com.cn>
+
+        [BlackBerry] Remove unused BackingStorePrivate::m_defersBlit
+        https://bugs.webkit.org/show_bug.cgi?id=105811
+        RIM PR 272067
+
+        Reviewed by George Staikos.
+        Internally Reviewed by Jakob Petsovits.
+
+        BackingStorePrivate::m_defersBlit is not used anywhere, it should
+        be removed to simplify the code and to avoid confusion.
+        * Api/BackingStore.cpp:
+        (BlackBerry::WebKit::BackingStorePrivate::BackingStorePrivate):
+        (BlackBerry::WebKit::BackingStorePrivate::blitVisibleContents):
+        * Api/BackingStore.h:
+        * Api/BackingStore_p.h:
+        (BackingStorePrivate):
+
+2012-12-26  Jakob Petsovits  <jpetsovits@rim.com>
+
+        [BlackBerry] Set load state for popups manually, in absence of a loader.
+        https://bugs.webkit.org/show_bug.cgi?id=105708
+        RIM PR 257216
+
+        Reviewed by George Staikos.
+        Internally reviewed by Chris Guan.
+
+        The WebPage class relies on the load state for various things,
+        among others it will only emit contents size changes after
+        layouts if a load state other than None is set.
+
+        Given that popups write the web page content itself with no
+        loader that would issue such notifications, the load state
+        should probably just be set manually in this case.
+
+        * WebCoreSupport/PagePopupBlackBerry.cpp:
+        (WebCore::PagePopupBlackBerry::init):
+
+2012-12-26  Sean Wang  <Xuewen.Wang@torchmobile.com.cn>
+
+        [BlackBerry] Caret doesn't update position when scrolling text in Input element
+        https://bugs.webkit.org/show_bug.cgi?id=105757
+
+        Reviewed by George Staikos.
+
+        PR 271627
+        Internally reviewed by George Staikos.
+
+        Call FrameSelection's updateAppearence instead of SelectionHandler's
+        selectionPositionChanged to update the caret position.
+
+        * Api/InRegionScroller.cpp:
+        (BlackBerry::WebKit::InRegionScrollerPrivate::setLayerScrollPosition):
+
+2012-12-25  Charles Wei  <charles.wei@torchmobile.com.cn>
+
+        [BlackBerry] Need to initialize the onLine in the global
+        https://bugs.webkit.org/show_bug.cgi?id=105749
+
+        Reviewed by George Staikos.
+
+        The NetworkStatus is initialized to online in the constructor by default,
+        we need to update it correctly with the network status at startup.
+
+        * Api/BlackBerryGlobal.cpp:
+        (BlackBerry::WebKit::globalInitialize):
+
+2012-12-24  Jakob Petsovits  <jpetsovits@rim.com>
+
+        [BlackBerry] Fix various RenderQueue bugs introduced by r138024.
+        https://bugs.webkit.org/show_bug.cgi?id=105717
+        RIM PR 269029
+
+        Reviewed by George Staikos.
+
+        Scroll/zoom jobs were pretty solid, but I managed to
+        leave some bugs in the region handling of RenderQueue's
+        renderRegularRenderJobs() function, causing us to skip
+        a desired blit or render operation in cases where the
+        region and tile tracking did not match up.
+
+        This commit fixes these errors.
+
+        * WebKitSupport/RenderQueue.cpp:
+        (BlackBerry::WebKit::RenderQueue::renderRegularRenderJobs):
+
+2012-12-24  Charles Wei  <charles.wei@torchmobile.com.cn>
+
+        [BlackBerry] Close page popup when a page becomes invisible.
+        https://bugs.webkit.org/show_bug.cgi?id=105704
+
+        Reviewed by George Staikos.
+
+        Reviewed internally by Jakob Petsovits.
+
+        * Api/WebPage.cpp:
+        (BlackBerry::WebKit::WebPagePrivate::setVisible):
+
+2012-12-23  Mary Wu  <mary.wu@torchmobile.com.cn>
+
+        [BlackBerry] give url when createWindow
+        https://bugs.webkit.org/show_bug.cgi?id=105702
+        RIM bug# 257329
+
+        Reviewed by George Staikos.
+
+        This is to revert previous commit 575407238c35f1a0fa7ff7dd5dbbf6cc3ece1107
+        for integration issue of cascade and air, as old app side still use the url
+        to invoke. It would unrevert after resolving the integration issue.
+
+        * WebCoreSupport/FrameLoaderClientBlackBerry.cpp:
+        (WebCore::FrameLoaderClientBlackBerry::dispatchCreatePage):
+
+2012-12-23  Jakob Petsovits  <jpetsovits@rim.com>
+
+        [BlackBerry] Specify tile usage enum for backingstore tiles.
+        https://bugs.webkit.org/show_bug.cgi?id=105688
+        RIM PR 262120
+
+        Reviewed by George Staikos.
+
+        This enables us to have separate tile sizes for
+        backingstore / root layer purposes and generic layers.
+
+        * Api/BackingStore.cpp:
+        (BlackBerry::WebKit::BackingStorePrivate::tileSize):
+
+2012-12-21  Max Feil  <mfeil@rim.com>
+
+        [BlackBerry] Fullscreen video fixed position container horizontal position is wrong
+        https://bugs.webkit.org/show_bug.cgi?id=105488
+
+        Reviewed by George Staikos.
+
+        The fix for https://bugs.webkit.org/show_bug.cgi?id=105333 has
+        broken fullscreen video, which was compensating by doing its
+        own positioning in x. My patch fixes things by making vertical
+        and horizontal handling symmetrical.
+        NOTE: This function was not upstreamed before, so you can't
+        actually see my diff. See the bug.
+
+        * Api/WebPage.cpp:
+        (WebKit):
+        (BlackBerry::WebKit::WebPagePrivate::adjustFullScreenElementDimensionsIfNeeded):
+
+2012-12-18  Nima Ghanavatian  <nghanavatian@rim.com>
+
+        [BlackBerry] Calculate correct word offsets for form elements.
+        https://bugs.webkit.org/show_bug.cgi?id=105354
+
+        Reviewed by Rob Buis.
+
+        PR266117
+        We need to calculate correct offsets for form elements, such as
+        textareas, relative to the start of the field. This allows for correct
+        spell checking of words in a textarea element after line breaks.
+
+        Internally reviewed by Mike Fenton.
+
+        * WebKitSupport/InputHandler.cpp:
+        (BlackBerry::WebKit::InputHandler::requestSpellingCheckingOptions):
+
 2012-12-18  Genevieve Mak  <gmak@rim.com>
 
         [BlackBerry] Remove extra call to doFatFingers.
@@ -1125,26 +1366,6 @@
         (WebCore::FrameLoaderClientBlackBerry::dispatchDidFailProvisionalLoad):
         (WebCore::FrameLoaderClientBlackBerry::dispatchWillSendRequest):
         (WebCore::FrameLoaderClientBlackBerry::decidePolicyForExternalLoad):
-
-2012-12-07  Mary Wu  <mary.wu@torchmobile.com.cn>
-
-        [BlackBerry] new target window would cause the url being loaded twice
-        https://bugs.webkit.org/show_bug.cgi?id=104086
-
-        Reviewed by Yong Li.
-
-        When webkit need to open window for a new target like "_blank", it would
-        load the url subsequently after createWindow. But the chrome browser would
-        load the url again when it get the OpenWindowEvent from native, which
-        causes the url being loaded twice. We should make sure that createWindow() be
-        used to create a new window only, not loading url, so we pass empty url
-        as parameter.
-
-        RIM PR# 257329
-        Internally reviewed by Charles Wei.
-
-        * WebCoreSupport/FrameLoaderClientBlackBerry.cpp:
-        (WebCore::FrameLoaderClientBlackBerry::dispatchCreatePage):
 
 2012-12-05  Otto Derek Cheung  <otcheung@rim.com>
 

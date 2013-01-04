@@ -217,7 +217,7 @@ inline ElementRareData* Element::ensureElementRareData()
 
 PassOwnPtr<NodeRareData> Element::createRareData()
 {
-    return adoptPtr(new ElementRareData(documentInternal()));
+    return adoptPtr(new ElementRareData());
 }
 
 DEFINE_VIRTUAL_ATTRIBUTE_EVENT_LISTENER(Element, blur);
@@ -899,8 +899,8 @@ void Element::classAttributeChanged(const AtomicString& newClassString)
         attributeData->clearClass();
     }
 
-    if (DOMTokenList* classList = optionalClassList())
-        static_cast<ClassList*>(classList)->reset(newClassString);
+    if (hasRareData())
+        elementRareData()->clearClassListValueForQuirksMode();
 
     if (shouldInvalidateStyle)
         setNeedsStyleRecalc();
@@ -1100,6 +1100,9 @@ Node::InsertionNotificationRequest Element::insertedInto(ContainerNode* insertio
 
     if (!insertionPoint->isInTreeScope())
         return InsertionDone;
+
+    if (hasRareData())
+        elementRareData()->clearClassListValueForQuirksMode();
 
     TreeScope* scope = insertionPoint->treeScope();
     if (scope != treeScope())
@@ -2209,13 +2212,6 @@ DOMTokenList* Element::classList()
     return data->classList();
 }
 
-DOMTokenList* Element::optionalClassList() const
-{
-    if (!hasRareData())
-        return 0;
-    return elementRareData()->classList();
-}
-
 DOMStringMap* Element::dataset()
 {
     ElementRareData* data = ensureElementRareData();
@@ -2288,9 +2284,19 @@ bool Element::isWebVTTNode() const
     return hasRareData() && elementRareData()->isWebVTTNode();
 }
 
-void Element::setIsWebVTTNode(bool flag)
+void Element::setIsWebVTTNode()
 {
-    ensureElementRareData()->setIsWebVTTNode(flag);
+    ensureElementRareData()->setIsWebVTTNode();
+}
+
+bool Element::isWebVTTFutureNode() const
+{
+    return hasRareData() && elementRareData()->isWebVTTFutureNode();
+}
+
+void Element::setIsWebVTTFutureNode()
+{
+    ensureElementRareData()->setIsWebVTTFutureNode();
 }
 #endif
 
@@ -2443,7 +2449,7 @@ bool Element::fastAttributeLookupAllowed(const QualifiedName& name) const
 
 #if ENABLE(SVG)
     if (isSVGElement())
-        return !SVGElement::isAnimatableAttribute(name);
+        return !static_cast<const SVGElement*>(this)->isAnimatableAttribute(name);
 #endif
 
     return true;

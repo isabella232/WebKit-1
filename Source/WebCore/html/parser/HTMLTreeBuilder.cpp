@@ -992,8 +992,8 @@ void HTMLTreeBuilder::processTemplateEndTag(AtomicHTMLToken* token)
 
 bool HTMLTreeBuilder::processColgroupEndTagForInColumnGroup()
 {
-    if (m_tree.currentIsRootNode()) {
-        ASSERT(isParsingFragment());
+    if (m_tree.currentIsRootNode() || m_tree.currentNode()->hasTagName(templateTag)) {
+        ASSERT(isParsingFragmentOrTemplateContents());
         // FIXME: parse error
         return false;
     }
@@ -1208,7 +1208,7 @@ void HTMLTreeBuilder::processStartTag(AtomicHTMLToken* token)
         }
 #endif
         if (!processColgroupEndTagForInColumnGroup()) {
-            ASSERT(isParsingFragment());
+            ASSERT(isParsingFragmentOrTemplateContents());
             return;
         }
         processStartTag(token);
@@ -2118,7 +2118,7 @@ void HTMLTreeBuilder::processEndTag(AtomicHTMLToken* token)
         }
 #endif
         if (!processColgroupEndTagForInColumnGroup()) {
-            ASSERT(isParsingFragment());
+            ASSERT(isParsingFragmentOrTemplateContents());
             return;
         }
         processEndTag(token);
@@ -2283,12 +2283,8 @@ void HTMLTreeBuilder::processEndTag(AtomicHTMLToken* token)
         break;
     case TemplateContentsMode:
 #if ENABLE(TEMPLATE_ELEMENT)
-        // FIXME: https://www.w3.org/Bugs/Public/show_bug.cgi?id=19966
         if (token->name() == templateTag) {
-            ASSERT(m_tree.currentStackItem()->hasTagName(templateTag));
-            m_tree.openElements()->pop();
-            m_templateInsertionModes.removeLast();
-            resetInsertionModeAppropriately();
+            processTemplateEndTag(token);
             return;
         }
         setInsertionMode(InBodyMode);
@@ -2441,7 +2437,7 @@ ReprocessBuffer:
         if (buffer.isEmpty())
             return;
         if (!processColgroupEndTagForInColumnGroup()) {
-            ASSERT(isParsingFragment());
+            ASSERT(isParsingFragmentOrTemplateContents());
             // The spec tells us to drop these characters on the floor.
             buffer.skipLeadingNonWhitespace();
             if (buffer.isEmpty())
@@ -2578,7 +2574,7 @@ void HTMLTreeBuilder::processEndOfFile(AtomicHTMLToken* token)
             return; // FIXME: Should we break here instead of returning?
         }
         if (!processColgroupEndTagForInColumnGroup()) {
-            ASSERT(isParsingFragment());
+            ASSERT(isParsingFragmentOrTemplateContents());
             return; // FIXME: Should we break here instead of returning?
         }
         processEndOfFile(token);

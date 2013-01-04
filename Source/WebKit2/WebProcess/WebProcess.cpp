@@ -26,20 +26,20 @@
 #include "config.h"
 #include "WebProcess.h"
 
-#include "DownloadManager.h"
+#include "AuthenticationManager.h"
 #include "InjectedBundle.h"
 #include "InjectedBundleUserMessageCoders.h"
 #include "Logging.h"
-#include "SandboxExtension.h"
 #include "StatisticsData.h"
 #include "WebApplicationCacheManager.h"
+#include "WebConnectionToUIProcess.h"
 #include "WebContextMessages.h"
 #include "WebCookieManager.h"
 #include "WebCoreArgumentCoders.h"
-#include "WebDatabaseManager.h"
 #include "WebFrame.h"
 #include "WebFrameNetworkingContext.h"
-#include "WebGeolocationManagerMessages.h"
+#include "WebGeolocationManager.h"
+#include "WebIconDatabaseProxy.h"
 #include "WebKeyValueStorageManager.h"
 #include "WebMediaCacheManager.h"
 #include "WebMemorySampler.h"
@@ -55,6 +55,7 @@
 #include <JavaScriptCore/MemoryStatistics.h>
 #include <WebCore/AXObjectCache.h>
 #include <WebCore/ApplicationCacheStorage.h>
+#include <WebCore/AuthenticationChallenge.h>
 #include <WebCore/CrossOriginPreflightResultCache.h>
 #include <WebCore/Font.h>
 #include <WebCore/FontCache.h>
@@ -76,9 +77,9 @@
 #include <WebCore/SecurityOrigin.h>
 #include <WebCore/Settings.h>
 #include <WebCore/StorageTracker.h>
+#include <wtf/CurrentTime.h>
 #include <wtf/HashCountedSet.h>
 #include <wtf/PassRefPtr.h>
-#include <wtf/RandomNumber.h>
 
 #if ENABLE(WEB_INTENTS)
 #include <WebCore/PlatformMessagePortChannel.h>
@@ -104,8 +105,27 @@
 #include "CustomProtocolManager.h"
 #endif
 
+#if ENABLE(NOTIFICATIONS) || ENABLE(LEGACY_NOTIFICATIONS)
+#include "WebNotificationManager.h"
+#endif
+
+#if ENABLE(SQL_DATABASE)
+#include "WebDatabaseManager.h"
+#endif
+
+#if ENABLE(NETWORK_PROCESS)
+#include "WebResourceLoadScheduler.h"
+#endif
+
+#if ENABLE(PLUGIN_PROCESS)
+#include "PluginProcessConnectionManager.h"
+#endif
+
 using namespace JSC;
 using namespace WebCore;
+
+// This should be less than plugInAutoStartExpirationTimeThreshold in PlugInAutoStartProvider.
+static const double plugInAutoStartExpirationTimeUpdateThreshold = 29 * 24 * 60;
 
 namespace WebKit {
 
@@ -131,24 +151,23 @@ WebProcess::WebProcess()
     , m_networkAccessManager(0)
 #endif
     , m_textCheckerState()
-    , m_geolocationManager(this)
 #if ENABLE(BATTERY_STATUS)
     , m_batteryManager(this)
 #endif
 #if ENABLE(NETWORK_INFO)
     , m_networkInfoManager(this)
 #endif
-#if ENABLE(NOTIFICATIONS) || ENABLE(LEGACY_NOTIFICATIONS)
-    , m_notificationManager(this)
-#endif
-    , m_iconDatabaseProxy(this)
+    , m_iconDatabaseProxy(new WebIconDatabaseProxy(this))
 #if ENABLE(NETWORK_PROCESS)
     , m_usesNetworkProcess(false)
+    , m_webResourceLoadScheduler(new WebResourceLoadScheduler)
+#endif
+#if ENABLE(PLUGIN_PROCESS)
+    , m_pluginProcessConnectionManager(new PluginProcessConnectionManager)
 #endif
 #if USE(SOUP)
     , m_soupRequestManager(this)
 #endif
-    , m_authenticationManager(m_messageReceiverMap)
 {
 #if USE(PLATFORM_STRATEGIES)
     // Initialize our platform strategies.
@@ -159,13 +178,37 @@ WebProcess::WebProcess()
     WebCore::initializeLoggingChannelsIfNecessary();
     WebKit::initializeLogChannelsIfNecessary();
 #endif // !LOG_DISABLED
+
+
+
+    // FIXME: This should moved to where WebProcess::initialize is called,
+    // so that ports have a chance to customize, and ifdefs in this file are
+    // limited.
+    addSupplement<WebKeyValueStorageManager>();
+
+    addSupplement<WebGeolocationManager>();
+    addSupplement<WebApplicationCacheManager>();
+    addSupplement<WebResourceCacheManager>();
+    addSupplement<WebCookieManager>();
+    addSupplement<WebMediaCacheManager>();
+    addSupplement<AuthenticationManager>();
+    
+#if ENABLE(SQL_DATABASE)
+    addSupplement<WebDatabaseManager>();
+#endif
+#if ENABLE(NOTIFICATIONS) || ENABLE(LEGACY_NOTIFICATIONS)
+    addSupplement<WebNotificationManager>();
+#endif
+#if ENABLE(CUSTOM_PROTOCOLS)
+    addSupplement<CustomProtocolManager>();
+#endif
 }
 
-void WebProcess::initialize(CoreIPC::Connection::Identifier serverIdentifier, RunLoop* runLoop)
+void WebProcess::initializeConnection(CoreIPC::Connection::Identifier serverIdentifier)
 {
     ASSERT(!m_connection);
 
-    m_connection = CoreIPC::Connection::createClientConnection(serverIdentifier, this, runLoop);
+    m_connection = CoreIPC::Connection::createClientConnection(serverIdentifier, this, RunLoop::main());
     m_connection->setDidCloseOnConnectionWorkQueueCallback(ChildProcess::didCloseOnConnectionWorkQueue);
     m_connection->setShouldExitOnSyncMessageSendFailure(true);
     m_connection->addQueueClient(&m_eventDispatcher);
@@ -173,25 +216,6 @@ void WebProcess::initialize(CoreIPC::Connection::Identifier serverIdentifier, Ru
     m_connection->open();
 
     m_webConnection = WebConnectionToUIProcess::create(this);
-
-    m_runLoop = runLoop;
-
-    m_authenticationManager.setConnection(m_connection.get());
-}
-
-void WebProcess::addMessageReceiver(CoreIPC::StringReference messageReceiverName, CoreIPC::MessageReceiver* messageReceiver)
-{
-    m_messageReceiverMap.addMessageReceiver(messageReceiverName, messageReceiver);
-}
-
-void WebProcess::addMessageReceiver(CoreIPC::StringReference messageReceiverName, uint64_t destinationID, CoreIPC::MessageReceiver* messageReceiver)
-{
-    m_messageReceiverMap.addMessageReceiver(messageReceiverName, destinationID, messageReceiver);
-}
-
-void WebProcess::removeMessageReceiver(CoreIPC::StringReference messageReceiverName, uint64_t destinationID)
-{
-    m_messageReceiverMap.removeMessageReceiver(messageReceiverName, destinationID);
 }
 
 void WebProcess::didCreateDownload()
@@ -211,7 +235,7 @@ CoreIPC::Connection* WebProcess::downloadProxyConnection()
 
 AuthenticationManager& WebProcess::downloadsAuthenticationManager()
 {
-    return m_authenticationManager;
+    return *supplement<AuthenticationManager>();
 }
 
 void WebProcess::initializeWebProcess(const WebProcessCreationParameters& parameters, CoreIPC::MessageDecoder& decoder)
@@ -237,17 +261,14 @@ void WebProcess::initializeWebProcess(const WebProcessCreationParameters& parame
         }
     }
 
-#if ENABLE(SQL_DATABASE)
-    // Make sure the WebDatabaseManager is initialized so that the Database directory is set.
-    WebDatabaseManager::initialize(parameters.databaseDirectory);
-#endif
+    WebProcessSupplementMap::const_iterator it = m_supplements.begin();
+    WebProcessSupplementMap::const_iterator end = m_supplements.end();
+    for (; it != end; ++it)
+        it->value->initialize(parameters);
 
 #if ENABLE(ICONDATABASE)
-    m_iconDatabaseProxy.setEnabled(parameters.iconDatabaseEnabled);
+    m_iconDatabaseProxy->setEnabled(parameters.iconDatabaseEnabled);
 #endif
-
-    StorageTracker::initializeTracker(parameters.localStorageDirectory, &WebKeyValueStorageManager::shared());
-    m_localStorageDirectory = parameters.localStorageDirectory;
 
     if (!parameters.applicationCacheDirectory.isEmpty())
         cacheStorage().setCacheDirectory(parameters.applicationCacheDirectory);
@@ -301,12 +322,7 @@ void WebProcess::initializeWebProcess(const WebProcessCreationParameters& parame
 #endif
     setTerminationTimeout(parameters.terminationTimeout);
 
-    for (size_t i = 0; i < parameters.plugInAutoStartOrigins.size(); ++i)
-        didAddPlugInAutoStartOrigin(parameters.plugInAutoStartOrigins[i]);
-
-#if ENABLE(CUSTOM_PROTOCOLS)
-    initializeCustomProtocolManager(parameters);
-#endif
+    resetPlugInAutoStartOrigins(parameters.plugInAutoStartOrigins);
 }
 
 #if ENABLE(NETWORK_PROCESS)
@@ -426,6 +442,13 @@ DownloadManager& WebProcess::downloadManager()
     return downloadManager;
 }
 
+#if ENABLE(PLUGIN_PROCESS)
+PluginProcessConnectionManager& WebProcess::pluginProcessConnectionManager()
+{
+    return *m_pluginProcessConnectionManager;
+}
+#endif
+
 void WebProcess::setVisitedLinkTable(const SharedMemory::Handle& handle)
 {
     RefPtr<SharedMemory> sharedMemory = SharedMemory::create(handle, SharedMemory::ReadOnly);
@@ -523,18 +546,8 @@ void WebProcess::removeWebPage(uint64_t pageID)
     enableTermination();
 }
 
-bool WebProcess::isSeparateProcess() const
-{
-    // If we're running on the main run loop, we assume that we're in a separate process.
-    return m_runLoop == RunLoop::main();
-}
- 
 bool WebProcess::shouldTerminate()
 {
-    // Keep running forever if we're running in the same process.
-    if (!isSeparateProcess())
-        return false;
-
     ASSERT(m_pageMap.isEmpty());
 
 #if ENABLE(NETWORK_PROCESS)
@@ -567,7 +580,7 @@ void WebProcess::terminate()
     m_webConnection = nullptr;
 
     platformTerminate();
-    m_runLoop->stop();
+    RunLoop::main()->stop();
 }
 
 void WebProcess::didReceiveSyncMessage(CoreIPC::Connection* connection, CoreIPC::MessageID messageID, CoreIPC::MessageDecoder& decoder, OwnPtr<CoreIPC::MessageEncoder>& replyEncoder)
@@ -585,45 +598,6 @@ void WebProcess::didReceiveMessage(CoreIPC::Connection* connection, CoreIPC::Mes
         return;
     }
 
-    if (messageID.is<CoreIPC::MessageClassWebApplicationCacheManager>()) {
-        WebApplicationCacheManager::shared().didReceiveMessage(connection, messageID, decoder);
-        return;
-    }
-
-    if (messageID.is<CoreIPC::MessageClassWebCookieManager>()) {
-        WebCookieManager::shared().didReceiveMessage(connection, messageID, decoder);
-        return;
-    }
-
-#if ENABLE(SQL_DATABASE)
-    if (messageID.is<CoreIPC::MessageClassWebDatabaseManager>()) {
-        WebDatabaseManager::shared().didReceiveMessage(connection, messageID, decoder);
-        return;
-    }
-#endif
-
-    if (messageID.is<CoreIPC::MessageClassWebKeyValueStorageManager>()) {
-        WebKeyValueStorageManager::shared().didReceiveMessage(connection, messageID, decoder);
-        return;
-    }
-
-    if (messageID.is<CoreIPC::MessageClassWebMediaCacheManager>()) {
-        WebMediaCacheManager::shared().didReceiveMessage(connection, messageID, decoder);
-        return;
-    }
-    
-    if (messageID.is<CoreIPC::MessageClassWebResourceCacheManager>()) {
-        WebResourceCacheManager::shared().didReceiveMessage(connection, messageID, decoder);
-        return;
-    }
-    
-#if ENABLE(CUSTOM_PROTOCOLS)
-    if (messageID.is<CoreIPC::MessageClassCustomProtocolManager>()) {
-        CustomProtocolManager::shared().didReceiveMessage(connection, messageID, decoder);
-        return;
-    }
-#endif
-
     if (messageID.is<CoreIPC::MessageClassWebPageGroupProxy>()) {
         uint64_t pageGroupID = decoder.destinationID();
         if (!pageGroupID)
@@ -639,9 +613,6 @@ void WebProcess::didReceiveMessage(CoreIPC::Connection* connection, CoreIPC::Mes
 
 void WebProcess::didClose(CoreIPC::Connection*)
 {
-    // When running in the same process the connection will never be closed.
-    ASSERT(isSeparateProcess());
-
 #ifndef NDEBUG
     m_inDidClose = true;
 
@@ -657,7 +628,7 @@ void WebProcess::didClose(CoreIPC::Connection*)
 #endif    
 
     // The UI process closed this connection, shut down.
-    m_runLoop->stop();
+    RunLoop::main()->stop();
 }
 
 void WebProcess::didReceiveInvalidMessage(CoreIPC::Connection*, CoreIPC::StringReference, CoreIPC::StringReference)
@@ -814,7 +785,10 @@ void WebProcess::clearPluginSiteData(const Vector<String>& pluginPaths, const Ve
 
 bool WebProcess::isPlugInAutoStartOrigin(unsigned plugInOriginHash)
 {
-    return m_plugInAutoStartOrigins.contains(plugInOriginHash);
+    HashMap<unsigned, double>::const_iterator it = m_plugInAutoStartOrigins.find(plugInOriginHash);
+    if (it == m_plugInAutoStartOrigins.end())
+        return false;
+    return currentTime() < it->value;
 }
 
 void WebProcess::addPlugInAutoStartOrigin(const String& pageOrigin, unsigned plugInOriginHash)
@@ -827,9 +801,30 @@ void WebProcess::addPlugInAutoStartOrigin(const String& pageOrigin, unsigned plu
     connection()->send(Messages::WebContext::AddPlugInAutoStartOriginHash(pageOrigin, plugInOriginHash), 0);
 }
 
-void WebProcess::didAddPlugInAutoStartOrigin(unsigned plugInOriginHash)
+void WebProcess::didAddPlugInAutoStartOrigin(unsigned plugInOriginHash, double expirationTime)
 {
-    m_plugInAutoStartOrigins.add(plugInOriginHash);
+    // When called, some web process (which also might be this one) added the origin for auto-starting,
+    // or received user interaction.
+    // Set the bit to avoid having redundantly call into the UI process upon user interaction.
+    m_plugInAutoStartOrigins.set(plugInOriginHash, expirationTime);
+}
+
+void WebProcess::resetPlugInAutoStartOrigins(const HashMap<unsigned, double>& hashes)
+{
+    m_plugInAutoStartOrigins.swap(const_cast<HashMap<unsigned, double>&>(hashes));
+}
+
+void WebProcess::plugInDidReceiveUserInteraction(unsigned plugInOriginHash)
+{
+    if (!plugInOriginHash)
+        return;
+
+    HashMap<unsigned, double>::iterator it = m_plugInAutoStartOrigins.find(plugInOriginHash);
+    ASSERT(it != m_plugInAutoStartOrigins.end());
+    if (it->value - currentTime() > plugInAutoStartExpirationTimeUpdateThreshold)
+        return;
+
+    connection()->send(Messages::WebContext::PlugInDidReceiveUserInteraction(plugInOriginHash), 0);
 }
 
 static void fromCountedSetToHashMap(TypeCountSet* countedSet, HashMap<String, uint64_t>& map)
@@ -992,13 +987,21 @@ void WebProcess::networkProcessConnectionClosed(NetworkProcessConnection* connec
     ASSERT(m_networkProcessConnection == connection);
 
     m_networkProcessConnection = 0;
+    
+    m_webResourceLoadScheduler->networkProcessCrashed();
 }
+
+WebResourceLoadScheduler& WebProcess::webResourceLoadScheduler()
+{
+    return *m_webResourceLoadScheduler;
+}
+
 #endif
 
 #if ENABLE(PLUGIN_PROCESS)
 void WebProcess::pluginProcessCrashed(CoreIPC::Connection*, const String& pluginPath, uint32_t processType)
 {
-    m_pluginProcessConnectionManager.pluginProcessCrashed(pluginPath, static_cast<PluginProcess::Type>(processType));
+    m_pluginProcessConnectionManager->pluginProcessCrashed(pluginPath, static_cast<PluginProcess::Type>(processType));
 }
 #endif
 
@@ -1073,30 +1076,5 @@ void WebProcess::didGetPlugins(CoreIPC::Connection*, uint64_t requestID, const V
 #endif
 }
 #endif // ENABLE(PLUGIN_PROCESS)
-
-#if ENABLE(CUSTOM_PROTOCOLS)
-void WebProcess::initializeCustomProtocolManager(const WebProcessCreationParameters& parameters)
-{
-#if ENABLE(NETWORK_PROCESS)
-    ASSERT(parameters.urlSchemesRegisteredForCustomProtocols.isEmpty() || !m_usesNetworkProcess);
-    if (m_usesNetworkProcess)
-        return;
-#endif
-
-    CustomProtocolManager::shared().initialize(m_connection);
-    for (size_t i = 0; i < parameters.urlSchemesRegisteredForCustomProtocols.size(); ++i)
-        CustomProtocolManager::shared().registerScheme(parameters.urlSchemesRegisteredForCustomProtocols[i]);
-}
-
-void WebProcess::registerSchemeForCustomProtocol(const WTF::String& scheme)
-{
-    CustomProtocolManager::shared().registerScheme(scheme);
-}
-
-void WebProcess::unregisterSchemeForCustomProtocol(const WTF::String& scheme)
-{
-    CustomProtocolManager::shared().unregisterScheme(scheme);
-}
-#endif // ENABLE(CUSTOM_PROTOCOLS)
 
 } // namespace WebKit

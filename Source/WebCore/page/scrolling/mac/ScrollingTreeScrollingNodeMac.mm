@@ -281,11 +281,11 @@ void ScrollingTreeScrollingNodeMac::setScrollLayerPosition(const IntPoint& posit
 
     IntSize scrollOffsetForFixedChildren = WebCore::scrollOffsetForFixedPosition(viewportRect(), contentsSize(), position, scrollOrigin(), frameScaleFactor(), false);
     IntRect viewportRect = this->viewportRect();
-    viewportRect.setLocation(toPoint(scrollOffsetForFixedChildren));
+    viewportRect.setLocation(IntPoint(scrollOffsetForFixedChildren));
 
     size_t size = m_children->size();
     for (size_t i = 0; i < size; ++i)
-        m_children->at(i)->parentScrollPositionDidChange(viewportRect);
+        m_children->at(i)->parentScrollPositionDidChange(viewportRect, FloatSize());
 }
 
 IntPoint ScrollingTreeScrollingNodeMac::minimumScrollPosition() const

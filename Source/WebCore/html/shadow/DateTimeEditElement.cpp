@@ -64,6 +64,7 @@ private:
     bool shouldMillisecondFieldReadOnly() const;
     bool shouldMinuteFieldReadOnly() const;
     bool shouldSecondFieldReadOnly() const;
+    bool shouldYearFieldReadOnly() const;
     inline const StepRange& stepRange() const { return m_parameters.stepRange; }
     DateTimeNumericFieldElement::Parameters createNumericFieldParameters(const Decimal& msPerFieldUnit, const Decimal& msPerFieldSize) const;
 
@@ -236,18 +237,18 @@ void DateTimeEditBuilder::visitField(DateTimeFormat::FieldType fieldType, int co
 
     case DateTimeFormat::FieldTypeYear: {
         DateTimeYearFieldElement::Parameters yearParams;
-        if (m_parameters.minimumYear == m_parameters.undefinedYear()) {
+        if (m_parameters.minimum.type() == DateComponents::Invalid) {
             yearParams.minimumYear = DateComponents::minimumYear();
             yearParams.minIsSpecified = false;
         } else {
-            yearParams.minimumYear = m_parameters.minimumYear;
+            yearParams.minimumYear = m_parameters.minimum.fullYear();
             yearParams.minIsSpecified = true;
         }
-        if (m_parameters.maximumYear == m_parameters.undefinedYear()) {
+        if (m_parameters.maximum.type() == DateComponents::Invalid) {
             yearParams.maximumYear = DateComponents::maximumYear();
             yearParams.maxIsSpecified = false;
         } else {
-            yearParams.maximumYear = m_parameters.maximumYear;
+            yearParams.maximumYear = m_parameters.maximum.fullYear();
             yearParams.maxIsSpecified = true;
         }
         if (yearParams.minimumYear > yearParams.maximumYear) {
@@ -255,7 +256,12 @@ void DateTimeEditBuilder::visitField(DateTimeFormat::FieldType fieldType, int co
             std::swap(yearParams.minIsSpecified, yearParams.maxIsSpecified);
         }
         yearParams.placeholder = m_parameters.placeholderForYear;
-        m_editElement.addField(DateTimeYearFieldElement::create(document, m_editElement, yearParams));
+        RefPtr<DateTimeFieldElement> field = DateTimeYearFieldElement::create(document, m_editElement, yearParams);
+        m_editElement.addField(field);
+        if (shouldYearFieldReadOnly()) {
+            field->setValueAsDate(m_dateValue);
+            field->setReadOnly();
+        }
         return;
     }
 
@@ -289,6 +295,14 @@ bool DateTimeEditBuilder::shouldSecondFieldReadOnly() const
     const Decimal decimalMsPerMinute(static_cast<int>(msPerMinute));
     Decimal secondPartOfMinimum = (stepRange().minimum().abs().remainder(decimalMsPerMinute) / static_cast<int>(msPerSecond)).floor();
     return secondPartOfMinimum == m_dateValue.second() && stepRange().step().remainder(decimalMsPerMinute).isZero();
+}
+
+bool DateTimeEditBuilder::shouldYearFieldReadOnly() const
+{
+    return m_parameters.minimum.type() != DateComponents::Invalid
+        && m_parameters.maximum.type() != DateComponents::Invalid
+        && m_parameters.minimum.fullYear() == m_parameters.maximum.fullYear()
+        && m_parameters.minimum.fullYear() == m_dateValue.fullYear();
 }
 
 void DateTimeEditBuilder::visitLiteral(const String& text)

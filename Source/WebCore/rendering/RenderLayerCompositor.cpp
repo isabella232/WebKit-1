@@ -60,6 +60,7 @@
 #include "TiledBacking.h"
 #include "TransformState.h"
 #include "WebCoreMemoryInstrumentation.h"
+#include <wtf/MemoryInstrumentationHashMap.h>
 
 #if ENABLE(PLUGIN_PROXY_FOR_VIDEO)
 #include "HTMLMediaElement.h"
@@ -563,7 +564,7 @@ bool RenderLayerCompositor::updateBacking(RenderLayer* layer, CompositingChangeR
 
             // At this time, the ScrollingCooridnator only supports the top-level frame.
             if (layer->isRootLayer() && !m_renderView->document()->ownerElement()) {
-                layer->backing()->attachToScrollingCoordinator(0);
+                layer->backing()->attachToScrollingCoordinatorWithParent(0);
                 if (ScrollingCoordinator* scrollingCoordinator = this->scrollingCoordinator())
                     scrollingCoordinator->frameViewRootLayerDidChange(m_renderView->frameView());
             }
@@ -1797,8 +1798,8 @@ bool RenderLayerCompositor::requiresCompositingForScrollableFrame() const
     // Need this done first to determine overflow.
     ASSERT(!m_renderView->needsLayout());
 
-    ScrollView* scrollView = m_renderView->frameView();
-    return scrollView->verticalScrollbar() || scrollView->horizontalScrollbar();
+    FrameView* frameView = m_renderView->frameView();
+    return frameView->isScrollable();
 }
 
 bool RenderLayerCompositor::requiresCompositingForTransform(RenderObject* renderer) const
@@ -2739,13 +2740,13 @@ void RenderLayerCompositor::registerOrUpdateViewportConstrainedLayer(RenderLayer
         return;
 
     ScrollingNodeID nodeID = backing->scrollLayerID();
-    if (!nodeID) {
-        RenderLayerBacking* parent = nearestScrollingCoordinatorAncestor(layer);
-        if (!parent)
-            return;
-        backing->attachToScrollingCoordinator(parent);
-        nodeID = backing->scrollLayerID();
-    }
+    RenderLayerBacking* parent = nearestScrollingCoordinatorAncestor(layer);
+    if (!parent)
+        return;
+
+    // Always call this even if the backing is already attached because the parent may have changed.
+    backing->attachToScrollingCoordinatorWithParent(parent);
+    nodeID = backing->scrollLayerID();
 
     if (layer->renderer()->isStickyPositioned())
         scrollingCoordinator->updateViewportConstrainedNode(nodeID, computeStickyViewportConstraints(layer), backing->graphicsLayer());
@@ -2810,6 +2811,7 @@ void RenderLayerCompositor::reportMemoryUsage(MemoryObjectInfo* memoryObjectInfo
     info.addMember(m_contentShadowLayer);
 #endif
     info.addMember(m_layerUpdater);
+    info.addMember(m_fixedPositionLayerNotCompositedReasonMap);
 }
 
 } // namespace WebCore

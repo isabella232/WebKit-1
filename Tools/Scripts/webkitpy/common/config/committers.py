@@ -98,6 +98,7 @@ watchers_who_are_not_contributors = [
     Account("David Levin", ["levin+threading@chromium.org"], ""),
     Account("David Levin", ["levin+watchlist@chromium.org"], ""),
     Account("Kent Tamura", ["tkent+wkapi@chromium.org"], ""),
+    Account("Mike West", ["mkwst+watchlist@chromium.org"], ""),
 ]
 
 
@@ -197,7 +198,6 @@ committers_unable_to_review = [
     Committer("Alexandre Elias", ["aelias@chromium.org", "aelias@google.com"], "aelias"),
     Committer("Alexandru Chiculita", "achicu@adobe.com", "achicu"),
     Committer("Alice Boxhall", "aboxhall@chromium.org", "aboxhall"),
-    Committer("Allan Sandfeld Jensen", ["allan.jensen@digia.com", "kde@carewolf.com", "sandfeld@kde.org", "allan.jensen@nokia.com"], "carewolf"),
     Committer("Alok Priyadarshi", "alokp@chromium.org", "alokp"),
     Committer("Ami Fischman", ["fischman@chromium.org", "fischman@google.com"], "fischman"),
     Committer("Amruth Raj", "amruthraj@motorola.com", "amruthraj"),
@@ -462,6 +462,7 @@ reviewers_list = [
     Reviewer("Alexey Proskuryakov", ["ap@webkit.org", "ap@apple.com"], "ap"),
     Reviewer("Alexis Menard", ["alexis@webkit.org", "menard@kde.org"], "darktears"),
     Reviewer("Alice Liu", "alice.liu@apple.com", "aliu"),
+    Reviewer("Allan Sandfeld Jensen", ["allan.jensen@digia.com", "kde@carewolf.com", "sandfeld@kde.org", "allan.jensen@nokia.com"], "carewolf"),
     Reviewer("Alp Toker", ["alp@nuanti.com", "alp@atoker.com", "alp@webkit.org"], "alp"),
     Reviewer("Anders Carlsson", ["andersca@apple.com", "acarlsson@apple.com"], "andersca"),
     Reviewer("Andreas Kling", ["akling@apple.com", "kling@webkit.org", "awesomekling@apple.com", "andreas.kling@nokia.com"], "kling"),

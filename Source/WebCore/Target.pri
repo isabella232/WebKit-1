@@ -86,6 +86,7 @@ SOURCES += \
      bindings/js/JSClipboardCustom.cpp \
      bindings/js/JSConsoleCustom.cpp \
      bindings/js/JSCoordinatesCustom.cpp \
+     bindings/js/JSCryptoCustom.cpp \
      bindings/js/JSCustomXPathNSResolver.cpp \
      bindings/js/JSDictionary.cpp \
      bindings/js/JSDOMBinding.cpp \
@@ -305,6 +306,7 @@ SOURCES += \
     css/RuleFeature.cpp \
     css/RuleSet.cpp \
     css/SelectorChecker.cpp \
+    css/SelectorFilter.cpp \
     css/ShadowValue.cpp \
     css/StyleBuilder.cpp \
     css/StyleInvalidationAnalysis.cpp \
@@ -469,6 +471,7 @@ SOURCES += \
     dom/UserGestureIndicator.cpp \
     dom/UserTypingGestureIndicator.cpp \
     dom/ViewportArguments.cpp \
+    dom/VisitedLinkState.cpp \
     dom/WebCoreMemoryInstrumentation.cpp \
     dom/WebKitAnimationEvent.cpp \
     dom/WebKitTransitionEvent.cpp \
@@ -1060,6 +1063,7 @@ SOURCES += \
     platform/network/HTTPValidation.cpp \
     platform/network/MIMEHeader.cpp \
     platform/network/NetworkStateNotifier.cpp \
+    platform/network/NetworkStorageSessionStub.cpp \
     platform/network/ParsedContentType.cpp \
     platform/network/ProtectionSpace.cpp \
     platform/network/ProxyServer.cpp \
@@ -1641,6 +1645,7 @@ HEADERS += \
     dom/StyledElement.h \
     dom/StyleElement.h \
     dom/TagNodeList.h \
+    dom/TemplateContentDocumentFragment.h \
     dom/TextEvent.h \
     dom/TextEventInputType.h \
     dom/Text.h \
@@ -2272,6 +2277,7 @@ HEADERS += \
     platform/network/HTTPValidation.h \
     platform/network/HTTPStatusCodes.h \
     platform/network/MIMESniffing.h \
+    platform/network/NetworkStorageSession.h \
     platform/network/NetworkingContext.h \
     platform/network/NetworkStateNotifier.h \
     platform/network/ParsedContentType.h \
@@ -3415,6 +3421,7 @@ enable?(WEB_AUDIO) {
         bindings/js/JSAudioBufferSourceNodeCustom.cpp \
         bindings/js/JSAudioContextCustom.cpp \
         bindings/js/JSDOMWindowWebAudioCustom.cpp \
+        bindings/js/JSOscillatorNodeCustom.cpp \
         bindings/js/JSScriptProcessorNodeCustom.cpp \
         Modules/webaudio/AsyncAudioDecoder.cpp \
         Modules/webaudio/AudioBasicInspectorNode.cpp \

@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2011 Nokia Corporation and/or its subsidiary(-ies)
+ * Copyright (c) 2012 Hewlett-Packard Development Company, L.P.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -51,6 +52,7 @@ namespace WebKit {
 struct QtRefCountedNetworkRequestData;
 class PageViewportControllerClientQt;
 class QtWebPageLoadClient;
+class QtWebPageFindClient;
 class QtWebPagePolicyClient;
 class QtWebPageUIClient;
 }
@@ -224,6 +226,7 @@ private:
     friend class QWebKitTest;
     friend class WebKit::PageViewportControllerClientQt;
     friend class WebKit::QtWebPageLoadClient;
+    friend class WebKit::QtWebPageFindClient;
     friend class WebKit::QtWebPagePolicyClient;
     friend class WebKit::QtWebPageUIClient;
     friend class WTR::PlatformWebView;
@@ -281,11 +284,20 @@ class QWEBKIT_EXPORT QQuickWebViewExperimental : public QObject {
     Q_PROPERTY(QList<QUrl> userScripts READ userScripts WRITE setUserScripts NOTIFY userScriptsChanged)
     Q_PROPERTY(QUrl remoteInspectorUrl READ remoteInspectorUrl NOTIFY remoteInspectorUrlChanged FINAL)
     Q_ENUMS(NavigationRequestActionExperimental)
+    Q_FLAGS(FindFlags)
 
 public:
     enum NavigationRequestActionExperimental {
         DownloadRequest = QQuickWebView::IgnoreRequest - 1
     };
+
+    enum FindFlag {
+        FindCaseSensitively = 1 << 0,
+        FindBackward = 1 << 1,
+        FindWrapsAroundDocument = 1 << 2,
+        FindHighlightAllOccurrences = 1 << 3
+    };
+    Q_DECLARE_FLAGS(FindFlags, FindFlag)
 
     virtual ~QQuickWebViewExperimental();
 
@@ -353,6 +365,7 @@ public Q_SLOTS:
     void goForwardTo(int index);
     void postMessage(const QString&);
     void evaluateJavaScript(const QString& script, const QJSValue& value = QJSValue());
+    void findText(const QString& string, FindFlags options = 0);
 
 Q_SIGNALS:
     void loadVisuallyCommitted();
@@ -377,6 +390,7 @@ Q_SIGNALS:
     void userScriptsChanged();
     void preferredMinimumContentsWidthChanged();
     void remoteInspectorUrlChanged();
+    void textFound(int matchCount);
 
 private:
     QQuickWebViewExperimental(QQuickWebView* webView, QQuickWebViewPrivate* webViewPrivate);
@@ -390,5 +404,7 @@ private:
     Q_DECLARE_PRIVATE(QQuickWebView)
     Q_DECLARE_PUBLIC(QQuickWebView)
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(QQuickWebViewExperimental::FindFlags)
 
 #endif // qquickwebview_p_h

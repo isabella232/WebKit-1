@@ -39,7 +39,7 @@
 namespace WebCore {
 
 struct SameSizeAsNodeRareData {
-    void* m_pointer[4];
+    void* m_pointer[3];
     unsigned m_indicesAndBitfields[2];
 
 #if ENABLE(MUTATION_OBSERVERS)
@@ -48,6 +48,11 @@ struct SameSizeAsNodeRareData {
 
 #if ENABLE(MICRODATA)
     void* m_microData;
+#endif
+
+// Enum is integer type and is aligned in Windows when placed in the bitfield, so it takes more space. 
+#if PLATFORM(WIN)
+    TextTrack::WebVTTNodeType m_WebVTTNodeType;
 #endif
 };
 COMPILE_ASSERT(sizeof(NodeRareData) == sizeof(SameSizeAsNodeRareData), NodeRareDataShouldStaySmall);
@@ -64,7 +69,6 @@ void NodeListsNodeData::reportMemoryUsage(MemoryObjectInfo* memoryObjectInfo) co
 void NodeRareData::reportMemoryUsage(MemoryObjectInfo* memoryObjectInfo) const
 {
     MemoryClassInfo info(memoryObjectInfo, this, WebCoreMemoryTypes::DOM);
-    info.addMember(treeScope());
     info.addMember(m_nodeLists);
 
 #if ENABLE(MUTATION_OBSERVERS)

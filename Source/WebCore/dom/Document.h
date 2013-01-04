@@ -140,6 +140,7 @@ class StyleSheetList;
 class Text;
 class TextResourceDecoder;
 class TreeWalker;
+class VisitedLinkState;
 class WebKitNamedFlow;
 class XMLHttpRequest;
 class XPathEvaluator;
@@ -672,7 +673,8 @@ public:
     void resetLinkColor();
     void resetVisitedLinkColor();
     void resetActiveLinkColor();
-    
+    VisitedLinkState* visitedLinkState() const { return m_visitedLinkState.get(); }
+
     MouseEventWithHitTestResults prepareMouseEvent(const HitTestRequest&, const LayoutPoint&, const PlatformMouseEvent&);
 
     /* Newly proposed CSS3 mechanism for selecting alternate
@@ -1190,7 +1192,8 @@ public:
 #endif
 
 #if ENABLE(TEMPLATE_ELEMENT)
-    Document* templateContentsOwnerDocument();
+    const Document* templateContentsOwnerDocument() const;
+    Document* ensureTemplateContentsOwnerDocument();
 #endif
 
     virtual void addConsoleMessage(MessageSource, MessageLevel, const String& message, unsigned long requestIdentifier = 0);
@@ -1365,6 +1368,7 @@ private:
     Color m_linkColor;
     Color m_visitedLinkColor;
     Color m_activeLinkColor;
+    OwnPtr<VisitedLinkState> m_visitedLinkState;
 
     bool m_loadingSheet;
     bool m_visuallyOrdered;
@@ -1567,26 +1571,35 @@ inline void Document::notifyRemovePendingSheetIfNeeded()
         didRemoveAllPendingStylesheet();
 }
 
+#if ENABLE(TEMPLATE_ELEMENT)
+inline const Document* Document::templateContentsOwnerDocument() const
+{
+    // If DOCUMENT does not have a browsing context, Let TEMPLATE CONTENTS OWNER be DOCUMENT and abort these steps.
+    if (!m_frame)
+        return this;
+
+    return m_templateContentsOwnerDocument.get();
+}
+#endif
+
 // Put these methods here, because they require the Document definition, but we really want to inline them.
 
 inline bool Node::isDocumentNode() const
 {
-    return this == m_document;
-}
-
-inline TreeScope* Node::treeScope() const
-{
-    return hasRareData() ? m_data.m_rareData->treeScope() : documentInternal();
+    return this == documentInternal();
 }
 
 inline Node::Node(Document* document, ConstructionType type)
     : m_nodeFlags(type)
-    , m_document(document)
+    , m_treeScope(document)
     , m_previous(0)
     , m_next(0)
 {
     if (document)
         document->guardRef();
+    else
+        m_treeScope = TreeScope::noDocumentInstance();
+
 #if !defined(NDEBUG) || (defined(DUMP_NODE_STATISTICS) && DUMP_NODE_STATISTICS)
     trackForDebugging();
 #endif

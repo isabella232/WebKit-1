@@ -29,6 +29,7 @@
 #if ENABLE(DFG_JIT)
 
 #include "Arguments.h"
+#include "DFGArrayifySlowPathGenerator.h"
 #include "DFGCallArrayAllocatorSlowPathGenerator.h"
 #include "DFGSlowPathGenerator.h"
 #include "LinkBuffer.h"
@@ -109,7 +110,7 @@ void SpeculativeJIT::speculationCheck(ExitKind kind, JSValueSource jsValueSource
     if (!m_compileOkay)
         return;
     ASSERT(at(m_compileIndex).canExit() || m_isCheckingArgumentTypes);
-    m_jit.appendExitJump(jumpToFail);
+    m_jit.appendExitInfo(jumpToFail);
     m_jit.codeBlock()->appendOSRExit(OSRExit(kind, jsValueSource, m_jit.graph().methodOfGettingAValueProfileFor(nodeIndex), this, m_stream->size()));
 }
 
@@ -119,12 +120,30 @@ void SpeculativeJIT::speculationCheck(ExitKind kind, JSValueSource jsValueSource
     speculationCheck(kind, jsValueSource, nodeUse.index(), jumpToFail);
 }
 
-void SpeculativeJIT::speculationCheck(ExitKind kind, JSValueSource jsValueSource, NodeIndex nodeIndex, const MacroAssembler::JumpList& jumpsToFail)
+OSRExitJumpPlaceholder SpeculativeJIT::speculationCheck(ExitKind kind, JSValueSource jsValueSource, NodeIndex nodeIndex)
+{
+    if (!m_compileOkay)
+        return OSRExitJumpPlaceholder();
+    ASSERT(at(m_compileIndex).canExit() || m_isCheckingArgumentTypes);
+    unsigned index = m_jit.codeBlock()->numberOfOSRExits();
+    m_jit.appendExitInfo();
+    m_jit.codeBlock()->appendOSRExit(OSRExit(kind, jsValueSource, m_jit.graph().methodOfGettingAValueProfileFor(nodeIndex), this, m_stream->size()));
+    return OSRExitJumpPlaceholder(index);
+}
+
+OSRExitJumpPlaceholder SpeculativeJIT::speculationCheck(ExitKind kind, JSValueSource jsValueSource, Edge nodeUse)
 {
     ASSERT(at(m_compileIndex).canExit() || m_isCheckingArgumentTypes);
-    Vector<MacroAssembler::Jump, 16> jumpVector = jumpsToFail.jumps();
-    for (unsigned i = 0; i < jumpVector.size(); ++i)
-        speculationCheck(kind, jsValueSource, nodeIndex, jumpVector[i]);
+    return speculationCheck(kind, jsValueSource, nodeUse.index());
+}
+
+void SpeculativeJIT::speculationCheck(ExitKind kind, JSValueSource jsValueSource, NodeIndex nodeIndex, const MacroAssembler::JumpList& jumpsToFail)
+{
+    if (!m_compileOkay)
+        return;
+    ASSERT(at(m_compileIndex).canExit() || m_isCheckingArgumentTypes);
+    m_jit.appendExitInfo(jumpsToFail);
+    m_jit.codeBlock()->appendOSRExit(OSRExit(kind, jsValueSource, m_jit.graph().methodOfGettingAValueProfileFor(nodeIndex), this, m_stream->size()));
 }
 
 void SpeculativeJIT::speculationCheck(ExitKind kind, JSValueSource jsValueSource, Edge nodeUse, const MacroAssembler::JumpList& jumpsToFail)
@@ -139,7 +158,7 @@ void SpeculativeJIT::speculationCheck(ExitKind kind, JSValueSource jsValueSource
         return;
     ASSERT(at(m_compileIndex).canExit() || m_isCheckingArgumentTypes);
     m_jit.codeBlock()->appendSpeculationRecovery(recovery);
-    m_jit.appendExitJump(jumpToFail);
+    m_jit.appendExitInfo(jumpToFail);
     m_jit.codeBlock()->appendOSRExit(OSRExit(kind, jsValueSource, m_jit.graph().methodOfGettingAValueProfileFor(nodeIndex), this, m_stream->size(), m_jit.codeBlock()->numberOfSpeculationRecoveries()));
 }
 
@@ -161,7 +180,7 @@ JumpReplacementWatchpoint* SpeculativeJIT::speculationWatchpoint(ExitKind kind, 
     if (!m_compileOkay)
         return 0;
     ASSERT(at(m_compileIndex).canExit() || m_isCheckingArgumentTypes);
-    m_jit.appendExitJump(JITCompiler::Jump());
+    m_jit.appendExitInfo(JITCompiler::JumpList());
     OSRExit& exit = m_jit.codeBlock()->osrExit(
         m_jit.codeBlock()->appendOSRExit(
             OSRExit(kind, jsValueSource,
@@ -270,9 +289,8 @@ void SpeculativeJIT::forwardSpeculationCheck(ExitKind kind, JSValueSource jsValu
 void SpeculativeJIT::forwardSpeculationCheck(ExitKind kind, JSValueSource jsValueSource, NodeIndex nodeIndex, const MacroAssembler::JumpList& jumpsToFail, const ValueRecovery& valueRecovery)
 {
     ASSERT(at(m_compileIndex).canExit() || m_isCheckingArgumentTypes);
-    Vector<MacroAssembler::Jump, 16> jumpVector = jumpsToFail.jumps();
-    for (unsigned i = 0; i < jumpVector.size(); ++i)
-        forwardSpeculationCheck(kind, jsValueSource, nodeIndex, jumpVector[i], valueRecovery);
+    speculationCheck(kind, jsValueSource, nodeIndex, jumpsToFail);
+    convertLastOSRExitToForward(valueRecovery);
 }
 
 void SpeculativeJIT::speculationCheck(ExitKind kind, JSValueSource jsValueSource, NodeIndex nodeIndex, MacroAssembler::Jump jumpToFail, SpeculationDirection direction)
@@ -548,11 +566,11 @@ void SpeculativeJIT::arrayify(Node& node, GPRReg baseReg, GPRReg propertyReg)
     }
         
     // We can skip all that comes next if we already have array storage.
-    MacroAssembler::JumpList done;
+    MacroAssembler::JumpList slowPath;
     
     if (node.op() == ArrayifyToStructure) {
-        done.append(m_jit.branchWeakPtr(
-            JITCompiler::Equal,
+        slowPath.append(m_jit.branchWeakPtr(
+            JITCompiler::NotEqual,
             JITCompiler::Address(baseReg, JSCell::structureOffset()),
             node.structure()));
     } else {
@@ -562,86 +580,12 @@ void SpeculativeJIT::arrayify(Node& node, GPRReg baseReg, GPRReg propertyReg)
         m_jit.load8(
             MacroAssembler::Address(structureGPR, Structure::indexingTypeOffset()), tempGPR);
         
-        done = jumpSlowForUnwantedArrayMode(tempGPR, node.arrayMode(), true);
-
-        // Next check that the object does not intercept indexed accesses. If it does,
-        // then this mode won't work.
-        speculationCheck(
-            BadIndexingType, JSValueSource::unboxedCell(baseReg), NoNode,
-            m_jit.branchTest8(
-                MacroAssembler::NonZero,
-                MacroAssembler::Address(structureGPR, Structure::typeInfoFlagsOffset()),
-                MacroAssembler::TrustedImm32(InterceptsGetOwnPropertySlotByIndexEvenWhenLengthIsNotZero)));
-    }
-        
-    // If we're allegedly creating contiguous storage and the index is bogus, then
-    // just don't.
-    if (propertyReg != InvalidGPRReg) {
-        switch (node.arrayMode().type()) {
-        case Array::Int32:
-        case Array::Double:
-        case Array::Contiguous:
-            speculationCheck(
-                Uncountable, JSValueRegs(), NoNode,
-                m_jit.branch32(
-                    MacroAssembler::AboveOrEqual, propertyReg, TrustedImm32(MIN_SPARSE_ARRAY_INDEX)));
-            break;
-        default:
-            break;
-        }
+        slowPath.append(jumpSlowForUnwantedArrayMode(tempGPR, node.arrayMode()));
     }
     
-    // Now call out to create the array storage.
-    silentSpillAllRegisters(tempGPR);
-    switch (node.arrayMode().type()) {
-    case Array::Int32:
-        callOperation(operationEnsureInt32, tempGPR, baseReg);
-        break;
-    case Array::Double:
-        callOperation(operationEnsureDouble, tempGPR, baseReg);
-        break;
-    case Array::Contiguous:
-        if (node.arrayMode().conversion() == Array::RageConvert)
-            callOperation(operationRageEnsureContiguous, tempGPR, baseReg);
-        else
-            callOperation(operationEnsureContiguous, tempGPR, baseReg);
-        break;
-    case Array::ArrayStorage:
-    case Array::SlowPutArrayStorage:
-        callOperation(operationEnsureArrayStorage, tempGPR, baseReg);
-        break;
-    default:
-        CRASH();
-        break;
-    }
-    silentFillAllRegisters(tempGPR);
+    addSlowPathGenerator(adoptPtr(new ArrayifySlowPathGenerator(
+        slowPath, this, node, baseReg, propertyReg, tempGPR, structureGPR)));
     
-    if (node.op() == ArrayifyToStructure) {
-        speculationCheck(
-            BadIndexingType, JSValueSource::unboxedCell(baseReg), NoNode,
-            m_jit.branchWeakPtr(
-                JITCompiler::NotEqual,
-                JITCompiler::Address(baseReg, JSCell::structureOffset()),
-                node.structure()));
-    } else {
-        // Alas, we need to reload the structure because silent spilling does not save
-        // temporaries. Nor would it be useful for it to do so. Either way we're talking
-        // about a load.
-        m_jit.loadPtr(
-            MacroAssembler::Address(baseReg, JSCell::structureOffset()), structureGPR);
-    
-        // Finally, check that we have the kind of array storage that we wanted to get.
-        // Note that this is a backwards speculation check, which will result in the 
-        // bytecode operation corresponding to this arrayification being reexecuted.
-        // That's fine, since arrayification is not user-visible.
-        m_jit.load8(
-            MacroAssembler::Address(structureGPR, Structure::indexingTypeOffset()), structureGPR);
-        speculationCheck(
-            BadIndexingType, JSValueSource::unboxedCell(baseReg), NoNode,
-            jumpSlowForUnwantedArrayMode(structureGPR, node.arrayMode()));
-    }
-    
-    done.link(&m_jit);
     noResult(m_compileIndex);
 }
 

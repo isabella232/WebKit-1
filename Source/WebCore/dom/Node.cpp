@@ -46,6 +46,7 @@
 #include "DOMImplementation.h"
 #include "DOMSettableTokenList.h"
 #include "Document.h"
+#include "DocumentFragment.h"
 #include "DocumentType.h"
 #include "Element.h"
 #include "ElementRareData.h"
@@ -96,6 +97,7 @@
 #include "StorageEvent.h"
 #include "StyleResolver.h"
 #include "TagNodeList.h"
+#include "TemplateContentDocumentFragment.h"
 #include "Text.h"
 #include "TextEvent.h"
 #include "TreeScopeAdopter.h"
@@ -412,10 +414,12 @@ Node::~Node()
     if (hasRareData())
         clearRareData();
 
+    Document* doc = documentInternal();
+
     if (hasEventTargetData()) {
 #if ENABLE(TOUCH_EVENT_TRACKING)
-        if (m_document)
-            m_document->didRemoveEventTargetNode(this);
+        if (doc)
+            doc->didRemoveEventTargetNode(this);
 #endif
         clearEventTargetData();
     }
@@ -423,7 +427,6 @@ Node::~Node()
     if (renderer())
         detach();
 
-    Document* doc = m_document;
     if (AXObjectCache::accessibilityEnabled() && doc && doc->axObjectCacheExists() && !isContainerNode())
         doc->axObjectCache()->remove(this);
     
@@ -436,23 +439,6 @@ Node::~Node()
         doc->guardDeref();
 
     InspectorCounters::decrementCounter(InspectorCounters::NodeCounter);
-}
-
-void Node::setDocument(Document* document)
-{
-    ASSERT(!inDocument() || m_document == document);
-    if (inDocument() || m_document == document)
-        return;
-
-    m_document = document;
-}
-
-void Node::setTreeScope(TreeScope* scope)
-{
-    if (!hasRareData() && scope->rootNode()->isDocumentNode())
-        return;
-
-    ensureRareData()->setTreeScope(scope);
 }
 
 NodeRareData* Node::rareData() const
@@ -476,7 +462,7 @@ NodeRareData* Node::ensureRareData()
 
 PassOwnPtr<NodeRareData> Node::createRareData()
 {
-    return adoptPtr(new NodeRareData(documentInternal()));
+    return adoptPtr(new NodeRareData());
 }
 
 void Node::clearRareData()
@@ -913,6 +899,11 @@ bool Node::isFocusable() const
     return true;
 }
 
+bool Node::isTreeScope() const
+{
+    return treeScope()->rootNode() == this;
+}
+
 bool Node::isKeyboardFocusable(KeyboardEvent*) const
 {
     return isFocusable() && tabIndex() >= 0;
@@ -921,12 +912,6 @@ bool Node::isKeyboardFocusable(KeyboardEvent*) const
 bool Node::isMouseFocusable() const
 {
     return isFocusable();
-}
-
-bool Node::documentFragmentIsShadowRoot() const
-{
-    ASSERT_NOT_REACHED();
-    return false;
 }
 
 Node* Node::focusDelegate()
@@ -1054,15 +1039,30 @@ bool Node::contains(const Node* node) const
     return this == node || node->isDescendantOf(this);
 }
 
-bool Node::containsIncludingShadowDOM(Node* node)
+bool Node::containsIncludingShadowDOM(const Node* node) const
 {
-    if (!node)
-        return false;
-    for (Node* n = node; n; n = n->parentOrHostNode()) {
-        if (n == this)
+    for (; node; node = node->parentOrHostNode()) {
+        if (node == this)
             return true;
     }
     return false;
+}
+
+bool Node::containsIncludingHostElements(const Node* node) const
+{
+#if ENABLE(TEMPLATE_ELEMENT)
+    while (node) {
+        if (node == this)
+            return true;
+        if (node->isDocumentFragment() && static_cast<const DocumentFragment*>(node)->isTemplateContent())
+            node = static_cast<const TemplateContentDocumentFragment*>(node)->host();
+        else
+            node = node->parentOrHostNode();
+    }
+    return false;
+#else
+    return containsIncludingShadowDOM(node);
+#endif
 }
 
 void Node::attach()
@@ -1087,7 +1087,7 @@ void Node::attach()
     setAttached();
     clearNeedsStyleRecalc();
 
-    Document* doc = m_document;
+    Document* doc = documentInternal();
     if (AXObjectCache::accessibilityEnabled() && doc && doc->axObjectCacheExists())
         doc->axObjectCache()->updateCacheAfterNodeIsAttached(this);
 }
@@ -1355,7 +1355,7 @@ PassRefPtr<NodeList> Node::getElementsByTagName(const AtomicString& localName)
         return 0;
 
     if (document()->isHTMLDocument())
-        return ensureRareData()->ensureNodeLists()->addCacheWithAtomicName<HTMLTagNodeList>(this, TagNodeListType, localName);
+        return ensureRareData()->ensureNodeLists()->addCacheWithAtomicName<HTMLTagNodeList>(this, HTMLTagNodeListType, localName);
     return ensureRareData()->ensureNodeLists()->addCacheWithAtomicName<TagNodeList>(this, TagNodeListType, localName);
 }
 
@@ -2588,7 +2588,7 @@ void Node::reportMemoryUsage(MemoryObjectInfo* memoryObjectInfo) const
     MemoryClassInfo info(memoryObjectInfo, this, WebCoreMemoryTypes::DOM);
     TreeShared<Node, ContainerNode>::reportMemoryUsage(memoryObjectInfo);
     ScriptWrappable::reportMemoryUsage(memoryObjectInfo);
-    info.addMember(m_document);
+    info.addMember(m_treeScope);
     info.addMember(m_next);
     info.addMember(m_previous);
     info.addMember(this->renderer());

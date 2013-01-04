@@ -48,8 +48,12 @@ static double nan(const char*)
 
 #endif
 
+#if JS_OBJC_API_ENABLED
+void testObjectiveCAPI(void);
+#endif
+
 static JSGlobalContextRef context;
-static int failed;
+int failed;
 static void assertEqualsAsBoolean(JSValueRef value, bool expectedValue)
 {
     if (JSValueToBoolean(context, value) != expectedValue) {
@@ -1040,6 +1044,10 @@ int main(int argc, char* argv[])
     ::SetErrorMode(0);
 #endif
 
+#if JS_OBJC_API_ENABLED
+    testObjectiveCAPI();
+#endif
+
     const char *scriptPath = "testapi.js";
     if (argc > 1) {
         scriptPath = argv[1];
@@ -1062,6 +1070,8 @@ int main(int argc, char* argv[])
     JSClassRef globalObjectClass = JSClassCreate(&globalObjectClassDefinition);
     context = JSGlobalContextCreateInGroup(NULL, globalObjectClass);
 
+    JSContextGroupRef contextGroup = JSContextGetGroup(context);
+    
     JSGlobalContextRetain(context);
     JSGlobalContextRelease(context);
     ASSERT(JSContextGetGlobalContext(context) == context);
@@ -1404,8 +1414,8 @@ int main(int argc, char* argv[])
     JSStringRef badSyntax = JSStringCreateWithUTF8CString(badSyntaxConstant);
     ASSERT(JSCheckScriptSyntax(context, goodSyntax, NULL, 0, NULL));
     ASSERT(!JSCheckScriptSyntax(context, badSyntax, NULL, 0, NULL));
-    ASSERT(!JSScriptCreateFromString(context, 0, 0, badSyntax, 0));
-    ASSERT(!JSScriptCreateReferencingImmortalASCIIText(context, 0, 0, badSyntaxConstant, strlen(badSyntaxConstant), 0));
+    ASSERT(!JSScriptCreateFromString(contextGroup, 0, 0, badSyntax, 0, 0));
+    ASSERT(!JSScriptCreateReferencingImmortalASCIIText(contextGroup, 0, 0, badSyntaxConstant, strlen(badSyntaxConstant), 0, 0));
 
     JSValueRef result;
     JSValueRef v;
@@ -1602,12 +1612,12 @@ int main(int argc, char* argv[])
     ASSERT(JSValueIsEqual(context, v, o, NULL));
     JSStringRelease(script);
 
-    JSScriptRef scriptObject = JSScriptCreateReferencingImmortalASCIIText(context, 0, 0, thisScript, strlen(thisScript), 0);
+    JSScriptRef scriptObject = JSScriptCreateReferencingImmortalASCIIText(contextGroup, 0, 0, thisScript, strlen(thisScript), 0, 0);
     v = JSScriptEvaluate(context, scriptObject, NULL, NULL);
     ASSERT(JSValueIsEqual(context, v, globalObject, NULL));
     v = JSScriptEvaluate(context, scriptObject, o, NULL);
     ASSERT(JSValueIsEqual(context, v, o, NULL));
-    JSScriptRelease(context, scriptObject);
+    JSScriptRelease(scriptObject);
 
     script = JSStringCreateWithUTF8CString("eval(this);");
     v = JSEvaluateScript(context, script, NULL, NULL, 1, NULL);
@@ -1630,10 +1640,16 @@ int main(int argc, char* argv[])
     } else {
         JSStringRef url = JSStringCreateWithUTF8CString(scriptPath);
         JSStringRef script = JSStringCreateWithUTF8CString(scriptUTF8);
-        JSScriptRef scriptObject = JSScriptCreateFromString(context, url, 1, script, &exception);
-        ASSERT((!scriptObject) != (!exception));
-        if (exception) {
-            printf("FAIL: Test script did not parse\n");
+        JSStringRef errorMessage = 0;
+        int errorLine = 0;
+        JSScriptRef scriptObject = JSScriptCreateFromString(contextGroup, url, 1, script, &errorMessage, &errorLine);
+        ASSERT((!scriptObject) != (!errorMessage));
+        if (!scriptObject) {
+            printf("FAIL: Test script did not parse\n\t%s:%d\n\t", scriptPath, errorLine);
+            CFStringRef errorCF = JSStringCopyCFString(kCFAllocatorDefault, errorMessage);
+            CFShow(errorCF);
+            CFRelease(errorCF);
+            JSStringRelease(errorMessage);
             failed = 1;
         }
 
@@ -1650,7 +1666,7 @@ int main(int argc, char* argv[])
             JSStringRelease(exceptionIString);
             failed = 1;
         }
-        JSScriptRelease(context, scriptObject);
+        JSScriptRelease(scriptObject);
         free(scriptUTF8);
     }
 

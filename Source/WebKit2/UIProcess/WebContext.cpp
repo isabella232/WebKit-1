@@ -38,6 +38,7 @@
 #include "WebApplicationCacheManagerProxy.h"
 #include "WebContextMessageKinds.h"
 #include "WebContextMessages.h"
+#include "WebContextSupplement.h"
 #include "WebContextUserMessageCoders.h"
 #include "WebCookieManagerProxy.h"
 #include "WebCoreArgumentCoders.h"
@@ -75,6 +76,10 @@
 #include "NetworkProcessCreationParameters.h"
 #include "NetworkProcessMessages.h"
 #include "NetworkProcessProxy.h"
+#endif
+
+#if ENABLE(CUSTOM_PROTOCOLS)
+#include "CustomProtocolManagerMessages.h"
 #endif
 
 #if USE(SOUP)
@@ -142,6 +147,9 @@ WebContext::WebContext(ProcessModel processModel, const String& injectedBundlePa
 #if ENABLE(NETWORK_PROCESS)
     , m_usesNetworkProcess(false)
 #endif
+#if USE(SOUP)
+    , m_ignoreTLSErrors(true)
+#endif
 {
     platformInitialize();
 
@@ -149,30 +157,31 @@ WebContext::WebContext(ProcessModel processModel, const String& injectedBundlePa
     addMessageReceiver(CoreIPC::MessageKindTraits<WebContextLegacyMessage::Kind>::messageReceiverName(), this);
 
     // NOTE: These sub-objects must be initialized after m_messageReceiverMap..
-    m_applicationCacheManagerProxy = WebApplicationCacheManagerProxy::create(this);
 #if ENABLE(BATTERY_STATUS)
     m_batteryManagerProxy = WebBatteryManagerProxy::create(this);
 #endif
-    m_cookieManagerProxy = WebCookieManagerProxy::create(this);
-#if ENABLE(SQL_DATABASE)
-    m_databaseManagerProxy = WebDatabaseManagerProxy::create(this);
-#endif
-    m_geolocationManagerProxy = WebGeolocationManagerProxy::create(this);
     m_iconDatabase = WebIconDatabase::create(this);
-    m_keyValueStorageManagerProxy = WebKeyValueStorageManagerProxy::create(this);
-    m_mediaCacheManagerProxy = WebMediaCacheManagerProxy::create(this);
 #if ENABLE(NETWORK_INFO)
     m_networkInfoManagerProxy = WebNetworkInfoManagerProxy::create(this);
 #endif
-    m_notificationManagerProxy = WebNotificationManagerProxy::create(this);
 #if ENABLE(NETSCAPE_PLUGIN_API)
     m_pluginSiteDataManager = WebPluginSiteDataManager::create(this);
 #endif // ENABLE(NETSCAPE_PLUGIN_API)
-    m_resourceCacheManagerProxy = WebResourceCacheManagerProxy::create(this);
-#if USE(SOUP)
-    m_soupRequestManagerProxy = WebSoupRequestManagerProxy::create(this);
+
+    addSupplement<WebApplicationCacheManagerProxy>();
+    addSupplement<WebCookieManagerProxy>();
+    addSupplement<WebGeolocationManagerProxy>();
+    addSupplement<WebKeyValueStorageManagerProxy>();
+    addSupplement<WebMediaCacheManagerProxy>();
+    addSupplement<WebNotificationManagerProxy>();
+    addSupplement<WebResourceCacheManagerProxy>();
+#if ENABLE(SQL_DATABASE)
+    addSupplement<WebDatabaseManagerProxy>();
 #endif
-    
+#if USE(SOUP)
+    addSupplement<WebSoupRequestManagerProxy>();
+#endif
+
     contexts().append(this);
 
     addLanguageChangeObserver(this, languageChanged);
@@ -202,53 +211,29 @@ WebContext::~WebContext()
 
     m_messageReceiverMap.invalidate();
 
-    m_applicationCacheManagerProxy->invalidate();
-    m_applicationCacheManagerProxy->clearContext();
+    WebContextSupplementMap::const_iterator it = m_supplements.begin();
+    WebContextSupplementMap::const_iterator end = m_supplements.end();
+    for (; it != end; ++it) {
+        it->value->contextDestroyed();
+        it->value->clearContext();
+    }
 
 #if ENABLE(BATTERY_STATUS)
     m_batteryManagerProxy->invalidate();
     m_batteryManagerProxy->clearContext();
 #endif
 
-    m_cookieManagerProxy->invalidate();
-    m_cookieManagerProxy->clearContext();
-
-#if ENABLE(SQL_DATABASE)
-    m_databaseManagerProxy->invalidate();
-    m_databaseManagerProxy->clearContext();
-#endif
-    
-    m_geolocationManagerProxy->invalidate();
-    m_geolocationManagerProxy->clearContext();
-
     m_iconDatabase->invalidate();
     m_iconDatabase->clearContext();
     
-    m_keyValueStorageManagerProxy->invalidate();
-    m_keyValueStorageManagerProxy->clearContext();
-
-    m_mediaCacheManagerProxy->invalidate();
-    m_mediaCacheManagerProxy->clearContext();
-
 #if ENABLE(NETWORK_INFO)
     m_networkInfoManagerProxy->invalidate();
     m_networkInfoManagerProxy->clearContext();
 #endif
-    
-    m_notificationManagerProxy->invalidate();
-    m_notificationManagerProxy->clearContext();
 
 #if ENABLE(NETSCAPE_PLUGIN_API)
     m_pluginSiteDataManager->invalidate();
     m_pluginSiteDataManager->clearContext();
-#endif
-
-    m_resourceCacheManagerProxy->invalidate();
-    m_resourceCacheManagerProxy->clearContext();
-
-#if USE(SOUP)
-    m_soupRequestManagerProxy->invalidate();
-    m_soupRequestManagerProxy->clearContext();
 #endif
 
     invalidateCallbackMap(m_dictionaryCallbacks);
@@ -316,12 +301,20 @@ void WebContext::setMaximumNumberOfProcesses(unsigned maximumNumberOfProcesses)
         m_webProcessCountLimit = maximumNumberOfProcesses;
 }
 
-WebProcessProxy* WebContext::deprecatedSharedProcess()
+CoreIPC::Connection* WebContext::networkingProcessConnection()
 {
-    ASSERT(m_processModel == ProcessModelSharedSecondaryProcess);
-    if (m_processes.isEmpty())
-        return 0;
-    return m_processes[0].get();
+    switch (m_processModel) {
+    case ProcessModelSharedSecondaryProcess:
+        return m_processes[0]->connection();
+    case ProcessModelMultipleSecondaryProcesses:
+#if ENABLE(NETWORK_PROCESS)
+        return m_networkProcess->connection();
+#else
+        break;
+#endif
+    }
+    ASSERT_NOT_REACHED();
+    return 0;
 }
 
 void WebContext::languageChanged(void* context)
@@ -389,7 +382,12 @@ void WebContext::removeNetworkProcessProxy(NetworkProcessProxy* networkProcessPr
 {
     ASSERT(m_networkProcess);
     ASSERT(networkProcessProxy == m_networkProcess.get());
-    
+
+    WebContextSupplementMap::const_iterator it = m_supplements.begin();
+    WebContextSupplementMap::const_iterator end = m_supplements.end();
+    for (; it != end; ++it)
+        it->value->processDidClose(networkProcessProxy);
+
     m_networkProcess = nullptr;
 }
 
@@ -507,7 +505,8 @@ WebProcessProxy* WebContext::createNewWebProcess()
     parameters.defaultRequestTimeoutInterval = WebURLRequest::defaultTimeoutInterval();
 
 #if ENABLE(NOTIFICATIONS) || ENABLE(LEGACY_NOTIFICATIONS)
-    m_notificationManagerProxy->populateCopyOfNotificationPermissions(parameters.notificationPermissions);
+    // FIXME: There should be a generic way for supplements to add to the intialization parameters.
+    supplement<WebNotificationManagerProxy>()->populateCopyOfNotificationPermissions(parameters.notificationPermissions);
 #endif
 
 #if ENABLE(NETWORK_PROCESS)
@@ -574,24 +573,17 @@ bool WebContext::shouldTerminate(WebProcessProxy* process)
     if (!m_processTerminationEnabled)
         return false;
 
-    if (!m_applicationCacheManagerProxy->shouldTerminate(process))
-        return false;
-    if (!m_cookieManagerProxy->shouldTerminate(process))
-        return false;
-#if ENABLE(SQL_DATABASE)
-    if (!m_databaseManagerProxy->shouldTerminate(process))
-        return false;
-#endif
-    if (!m_keyValueStorageManagerProxy->shouldTerminate(process))
-        return false;
-    if (!m_mediaCacheManagerProxy->shouldTerminate(process))
-        return false;
+    WebContextSupplementMap::const_iterator it = m_supplements.begin();
+    WebContextSupplementMap::const_iterator end = m_supplements.end();
+    for (; it != end; ++it) {
+        if (!it->value->shouldTerminate(process))
+            return false;
+    }
+
 #if ENABLE(NETSCAPE_PLUGIN_API)
     if (!m_pluginSiteDataManager->shouldTerminate(process))
         return false;
 #endif
-    if (!m_resourceCacheManagerProxy->shouldTerminate(process))
-        return false;
 
     return true;
 }
@@ -625,7 +617,7 @@ void WebContext::disconnectProcess(WebProcessProxy* process)
     if (m_haveInitialEmptyProcess && process == m_processes.last())
         m_haveInitialEmptyProcess = false;
 
-    // FIXME (Multi-WebProcess): <rdar://problem/12239765> All the invalidation calls below are still necessary in multi-process mode, but they should only affect data structures pertaining to the process being disconnected.
+    // FIXME (Multi-WebProcess): <rdar://problem/12239765> Some of the invalidation calls below are still necessary in multi-process mode, but they should only affect data structures pertaining to the process being disconnected.
     // Clearing everything causes assertion failures, so it's less trouble to skip that for now.
     if (m_processModel != ProcessModelSharedSecondaryProcess) {
         RefPtr<WebProcessProxy> protect(process);
@@ -633,24 +625,16 @@ void WebContext::disconnectProcess(WebProcessProxy* process)
         return;
     }
 
-    m_applicationCacheManagerProxy->invalidate();
+    WebContextSupplementMap::const_iterator it = m_supplements.begin();
+    WebContextSupplementMap::const_iterator end = m_supplements.end();
+    for (; it != end; ++it)
+        it->value->processDidClose(process);
+
 #if ENABLE(BATTERY_STATUS)
     m_batteryManagerProxy->invalidate();
 #endif
-    m_cookieManagerProxy->invalidate();
-#if ENABLE(SQL_DATABASE)
-    m_databaseManagerProxy->invalidate();
-#endif
-    m_geolocationManagerProxy->invalidate();
-    m_keyValueStorageManagerProxy->invalidate();
-    m_mediaCacheManagerProxy->invalidate();
 #if ENABLE(NETWORK_INFO)
     m_networkInfoManagerProxy->invalidate();
-#endif
-    m_notificationManagerProxy->invalidate();
-    m_resourceCacheManagerProxy->invalidate();
-#if USE(SOUP)
-    m_soupRequestManagerProxy->invalidate();
 #endif
 
     // When out of process plug-ins are enabled, we don't want to invalidate the plug-in site data
@@ -1151,27 +1135,30 @@ void WebContext::addPlugInAutoStartOriginHash(const String& pageOrigin, unsigned
     m_plugInAutoStartProvider.addAutoStartOrigin(pageOrigin, plugInOriginHash);
 }
 
-#if ENABLE(CUSTOM_PROTOCOLS)
-void WebContext::registerSchemeForCustomProtocol(const WTF::String& scheme)
+void WebContext::plugInDidReceiveUserInteraction(unsigned plugInOriginHash)
 {
-#if ENABLE(NETWORK_PROCESS)
-    if (m_usesNetworkProcess && m_networkProcess) {
-        m_networkProcess->send(Messages::NetworkProcess::RegisterSchemeForCustomProtocol(scheme), 0);
-        return;
-    }
-#endif
-    sendToAllProcesses(Messages::WebProcess::RegisterSchemeForCustomProtocol(scheme));
+    m_plugInAutoStartProvider.didReceiveUserInteraction(plugInOriginHash);
 }
 
-void WebContext::unregisterSchemeForCustomProtocol(const WTF::String& scheme)
+PassRefPtr<ImmutableDictionary> WebContext::plugInAutoStartOriginHashes() const
 {
-#if ENABLE(NETWORK_PROCESS)
-    if (m_usesNetworkProcess && m_networkProcess) {
-        m_networkProcess->send(Messages::NetworkProcess::UnregisterSchemeForCustomProtocol(scheme), 0);
-        return;
-    }
-#endif
-    sendToAllProcesses(Messages::WebProcess::UnregisterSchemeForCustomProtocol(scheme));
+    return m_plugInAutoStartProvider.autoStartOriginsTableCopy();
+}
+
+void WebContext::setPlugInAutoStartOriginHashes(ImmutableDictionary& dictionary)
+{
+    return m_plugInAutoStartProvider.setAutoStartOriginsTable(dictionary);
+}
+
+#if ENABLE(CUSTOM_PROTOCOLS)
+void WebContext::registerSchemeForCustomProtocol(const String& scheme)
+{
+    sendToNetworkingProcess(Messages::CustomProtocolManager::RegisterScheme(scheme));
+}
+
+void WebContext::unregisterSchemeForCustomProtocol(const String& scheme)
+{
+    sendToNetworkingProcess(Messages::CustomProtocolManager::UnregisterScheme(scheme));
 }
 #endif
 

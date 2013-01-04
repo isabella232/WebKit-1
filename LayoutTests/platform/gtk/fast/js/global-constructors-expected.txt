@@ -3,6 +3,7 @@ This test documents our set of global constructors we expose on the window objec
 On success, you will see a series of "PASS" messages, followed by "TEST COMPLETE".
 
 
+PASS ArrayBufferView.toString() is '[object ArrayBufferViewConstructor]'
 PASS Attr.toString() is '[object AttrConstructor]'
 PASS Audio.toString() is '[object AudioConstructor]'
 PASS BeforeLoadEvent.toString() is '[object BeforeLoadEventConstructor]'
@@ -330,6 +331,7 @@ PASS WebKitCSSRegionRule.toString() is '[object WebKitCSSRegionRuleConstructor]'
 PASS WebKitCSSTransformValue.toString() is '[object WebKitCSSTransformValueConstructor]'
 FAIL WebKitMutationObserver.toString() should be [object WebKitMutationObserverConstructor]. Was [object MutationObserverConstructor].
 PASS WebKitPoint.toString() is '[object WebKitPointConstructor]'
+FAIL WebKitShadowRoot.toString() should be [object WebKitShadowRootConstructor]. Was [object ShadowRootConstructor].
 PASS WebKitTransitionEvent.toString() is '[object WebKitTransitionEventConstructor]'
 PASS WebSocket.toString() is '[object WebSocketConstructor]'
 PASS WheelEvent.toString() is '[object WheelEventConstructor]'

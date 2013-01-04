@@ -31,6 +31,7 @@
 #include <Evas.h>
 #include <WebCore/FloatPoint.h>
 #include <WebCore/IntRect.h>
+#include <WebCore/RefPtrCairo.h>
 #include <WebCore/TextDirection.h>
 #include <WebCore/Timer.h>
 #include <WebKit2/WKBase.h>
@@ -107,8 +108,8 @@ public:
     ~EwkViewImpl();
 
     static EwkViewImpl* fromEvasObject(const Evas_Object* view);
-
     Evas_Object* view() { return m_view; }
+
     WKPageRef wkPage();
     WebKit::WebPageProxy* page() { return m_pageProxy.get(); }
     EwkContext* ewkContext() { return m_context.get(); }
@@ -119,6 +120,8 @@ public:
     WebCore::IntSize size() const;
     bool isFocused() const;
     bool isVisible() const;
+
+    void setDeviceScaleFactor(float scale);
 
     WebCore::AffineTransform transformToScene() const;
     WebCore::AffineTransform transformFromScene() const;
@@ -191,9 +194,6 @@ public:
         return EwkViewCallbacks::CallBack<callbackType>(m_view);
     }
 
-#if USE(TILED_BACKING_STORE)
-    void informLoadCommitted();
-#endif
     unsigned long long informDatabaseQuotaReached(const String& databaseName, const String& displayName, unsigned long long currentQuota, unsigned long long currentOriginUsage, unsigned long long currentDatabaseUsage, unsigned long long expectedUsage);
 
 #if USE(TILED_BACKING_STORE)
@@ -212,7 +212,7 @@ public:
     bool isHardwareAccelerated() const { return m_isHardwareAccelerated; }
     void setDrawsBackground(bool enable) { m_setDrawsBackground = enable; }
 
-    WKImageRef takeSnapshot();
+    PassRefPtr<cairo_surface_t> takeSnapshot();
 
 private:
 #if USE(ACCELERATED_COMPOSITING)
@@ -282,7 +282,9 @@ private:
     OwnPtr<EwkContextMenu> m_contextMenu;
     OwnPtr<EwkPopupMenu> m_popupMenu;
     OwnPtr<WebKit::InputMethodContextEfl> m_inputMethodContext;
+#if ENABLE(INPUT_TYPE_COLOR)
     OwnPtr<EwkColorPicker> m_colorPicker;
+#endif
     bool m_isHardwareAccelerated;
     bool m_setDrawsBackground;
 };

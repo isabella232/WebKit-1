@@ -64,7 +64,7 @@ public:
     PassRefPtr<ResourceBuffer> resourceData();
 
     void setDefersLoading(bool);
-    void setShouldBufferData(DataBufferingPolicy);
+    void setDataBufferingPolicy(DataBufferingPolicy);
 
 #if HAVE(RUNLOOP_TIMER)
     typedef RunLoopTimer<MainResourceLoader> MainResourceLoaderTimer;
@@ -128,6 +128,7 @@ private:
     bool m_loadingMultipartContent;
     bool m_waitingForContentPolicy;
     double m_timeOfLastDataReceived;
+    unsigned long m_substituteDataLoadIdentifier;
 
 #if PLATFORM(MAC) && !PLATFORM(IOS) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 1080
     WebFilterEvaluator *m_filter;

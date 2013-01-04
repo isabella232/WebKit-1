@@ -539,7 +539,7 @@ static void addPlatformComponentsInfo(PassRefPtr<InspectorMemoryBlocks> children
 void InspectorMemoryAgent::getProcessMemoryDistribution(ErrorString*, const bool* reportGraph, RefPtr<InspectorMemoryBlock>& processMemory, RefPtr<InspectorObject>& graph)
 {
     OwnPtr<HeapGraphSerializer> graphSerializer;
-    if (reportGraph)
+    if (reportGraph && *reportGraph)
         graphSerializer = adoptPtr(new HeapGraphSerializer());
     MemoryInstrumentationClientImpl memoryInstrumentationClient(graphSerializer.get());
     m_inspectorClient->getAllocatedObjects(memoryInstrumentationClient.allocatedObjects());
@@ -585,7 +585,7 @@ void InspectorMemoryAgent::reportMemoryUsage(MemoryObjectInfo* memoryObjectInfo)
     info.addMember(m_page);
 }
 
-InspectorMemoryAgent::InspectorMemoryAgent(InstrumentingAgents* instrumentingAgents, InspectorClient* client, InspectorState* state, Page* page)
+InspectorMemoryAgent::InspectorMemoryAgent(InstrumentingAgents* instrumentingAgents, InspectorClient* client, InspectorCompositeState* state, Page* page)
     : InspectorBaseAgent<InspectorMemoryAgent>("Memory", instrumentingAgents, state)
     , m_inspectorClient(client)
     , m_page(page)
