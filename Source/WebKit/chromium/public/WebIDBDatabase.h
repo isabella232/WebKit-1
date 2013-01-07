@@ -68,6 +68,9 @@ public:
     virtual void abort(long long transactionId) { WEBKIT_ASSERT_NOT_REACHED(); }
     virtual void commit(long long transactionId) { WEBKIT_ASSERT_NOT_REACHED(); }
 
+    virtual void createIndex(long long transactionId, long long objectStoreId, long long indexId, const WebString& name, const WebIDBKeyPath&, bool unique, bool multiEntry) { WEBKIT_ASSERT_NOT_REACHED(); }
+    virtual void deleteIndex(long long transactionId, long long objectStoreId, long long indexId) { WEBKIT_ASSERT_NOT_REACHED(); }
+
     enum TaskType {
         NormalTask = 0,
         PreemptiveTask
@@ -89,7 +92,7 @@ public:
     virtual void openCursor(long long transactionId, long long objectStoreId, long long indexId, const WebIDBKeyRange&, unsigned short direction, bool keyOnly, TaskType, WebIDBCallbacks*) { WEBKIT_ASSERT_NOT_REACHED(); }
     virtual void count(long long transactionId, long long objectStoreId, long long indexId, const WebIDBKeyRange&, WebIDBCallbacks*) { WEBKIT_ASSERT_NOT_REACHED(); }
     virtual void deleteRange(long long transactionId, long long objectStoreId, const WebIDBKeyRange&, WebIDBCallbacks*) { WEBKIT_ASSERT_NOT_REACHED(); }
-    virtual void clear(long long transactionId, long long objectStoreId, WebIDBCallbacks*)  { WEBKIT_ASSERT_NOT_REACHED(); }
+    virtual void clear(long long transactionId, long long objectStoreId, WebIDBCallbacks*) { WEBKIT_ASSERT_NOT_REACHED(); }
 
 protected:
     WebIDBDatabase() { }

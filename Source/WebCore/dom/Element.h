@@ -368,8 +368,7 @@ public:
 
     bool hasPseudoElements() const;
     PseudoElement* pseudoElement(PseudoId) const;
-    PseudoElement* beforePseudoElement() const { return pseudoElement(BEFORE); }
-    PseudoElement* afterPseudoElement() const { return pseudoElement(AFTER); }
+    RenderObject* pseudoElementRenderer(PseudoId) const;
     bool childNeedsShadowWalker() const;
     void didShadowTreeAwareChildrenChange();
 
@@ -429,6 +428,10 @@ public:
 
 #if ENABLE(SVG)
     virtual bool childShouldCreateRenderer(const NodeRenderingContext&) const;
+    bool hasPendingResources() const;
+    void setHasPendingResources();
+    void clearHasPendingResources();
+    virtual void buildPendingResource() { };
 #endif
 
 #if ENABLE(VIDEO_TRACK)
@@ -673,7 +676,7 @@ inline const ElementAttributeData* Element::ensureUpdatedAttributeData() const
 
 inline void Element::updateName(const AtomicString& oldName, const AtomicString& newName)
 {
-    if (!inDocument())
+    if (!inDocument() || isInShadowTree())
         return;
 
     if (oldName == newName)

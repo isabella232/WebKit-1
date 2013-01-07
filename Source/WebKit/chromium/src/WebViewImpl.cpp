@@ -1733,11 +1733,6 @@ void WebViewImpl::setCompositorSurfaceReady()
         m_layerTreeView->setSurfaceReady();
 }
 
-WebLayerTreeView* WebViewImpl::webLayerTreeView()
-{
-    return m_layerTreeView;
-}
-
 void WebViewImpl::animate(double)
 {
 #if ENABLE(REQUEST_ANIMATION_FRAME)
@@ -1921,14 +1916,6 @@ bool WebViewImpl::isInputThrottled() const
         return m_layerTreeView->commitRequested();
 #endif
     return false;
-}
-
-void WebViewImpl::loseCompositorContext(int numTimes)
-{
-#if USE(ACCELERATED_COMPOSITING)
-    if (m_layerTreeView)
-        m_layerTreeView->loseCompositorContext(numTimes);
-#endif
 }
 
 void WebViewImpl::enterFullScreenForElement(WebCore::Element* element)

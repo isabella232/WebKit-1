@@ -295,7 +295,7 @@ webkit.org/b/99027 fast/css/image-set-parsing.html [ Failure ]
 webkit.org/b/99027 fast/css/image-set-parsing-invalid.html [ Pass ]
 webkit.org/b/99027 fast/css/image-set-setting.html [ Failure ]
 webkit.org/b/99027 fast/css/cursor-parsing-image-set.html [ Failure ]
-webkit.org/b/99027 fast/events/mouse-cursor-image-set.html [ Failure ]
+webkit.org/b/99027 fast/events/mouse-cursor-image-set.html [ Timeout ]
 
 # For now, Web Audio API is disabled
 webkit.org/b/67187 webaudio [ Skip ]
@@ -1146,7 +1146,7 @@ webkit.org/b/68855 editing/selection/select-bidi-run.html [ Failure ]
 # This test is out-dated since r95899.
 webkit.org/b/65709 canvas/philip/tests/2d.drawImage.outsidesource.html [ Failure ]
 
-Bug(GTK) http/tests/multipart/multipart-wait-before-boundary.html [ Failure Pass Slow ]
+webkit.org/b/105693 http/tests/multipart/multipart-wait-before-boundary.html [ Skip ]
 
 # Does not render the rectangle as it should, even though the multiple parts seem to work
 webkit.org/b/54251 http/tests/multipart/invalid-image-data.html [ Timeout ]
@@ -1328,6 +1328,10 @@ webkit.org/b/91488 fast/dom/shadow/shadowdom-for-output-only-shadow.html [ Image
 webkit.org/b/91489 fast/dom/shadow/shadowdom-for-fieldset-complex-shadow.html [ ImageOnlyFailure ]
 webkit.org/b/91489 fast/dom/shadow/shadowdom-for-fieldset-only-shadow.html [ ImageOnlyFailure ]
 
+Bug(ojan) fast/ruby/base-shorter-than-text.html [ Failure ]
+Bug(ojan) fast/table/038-vertical.html [ Failure ImageOnlyFailure ]
+Bug(ojan) fast/table/border-collapsing/004-vertical.html [ Failure ImageOnlyFailure ]
+
 webkit.org/b/49142 fast/regions/style-scoped-in-flow-override-region-styling-multiple-regions.html [ ImageOnlyFailure ]
 
 # Missing support in DRT for Geolocation's Coordinate attributes.
@@ -1396,6 +1400,12 @@ webkit.org/b/98146 accessibility/svg-bounds.html [ Failure ]
 
 # Leaking state into the next test.
 webkit.org/b/85522 http/tests/security/sandboxed-iframe-form-top.html [ Skip ]
+
+webkit.org/b/106015 fast/css-generated-content/pseudo-animation.html [ Failure ]
+webkit.org/b/106015 fast/css-generated-content/pseudo-transition.html [ Failure ]
+
+# Added only temporarily, until a clean build is performed on the builders.
+Bug(GTK) transitions/transitions-parsing.html [ Failure ]
 
 #////////////////////////////////////////////////////////////////////////////////////////
 # End of Tests failing

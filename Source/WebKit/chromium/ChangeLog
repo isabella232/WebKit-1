@@ -1,3 +1,164 @@
+2013-01-07  Stephen Chenney  <schenney@chromium.org>
+
+        Add comment to WebKit skia gyp
+
+        Unreviewed additon of a comment.
+
+        * skia_webkit.gyp: Some changes should not yet be committed. Commented to that effect.
+
+2013-01-07  Stephen Chenney  <schenney@chromium.org>
+
+        Add Skia build flags to WebKit skia gyp
+
+        Unreviewed change to enable easy layout test rebaselining.
+
+        * skia_webkit.gyp: Added SK_IGNORE_QUAD_STROKE_FIX and SK_IGNORE_TREAT_AS_SPRITE
+
+2013-01-05  Alec Flett  <alecflett@chromium.org>
+
+        IndexedDB: Migrate backend ObjectStore calls to use transaction id
+        https://bugs.webkit.org/show_bug.cgi?id=102741
+
+        Reviewed by Tony Chang.
+
+        Fix a bug where an array was initialized with a large empty buffer,
+        clean up whitespace, and update to match signatures that changed
+        in WebCore.
+
+        * public/WebIDBDatabase.h:
+        (WebKit::WebIDBDatabase::clear):
+        * src/WebIDBDatabaseImpl.cpp:
+        (WebKit::WebIDBDatabaseImpl::put):
+        * src/WebIDBIndexImpl.cpp:
+        * tests/IDBDatabaseBackendTest.cpp:
+
+2013-01-05  Alec Flett  <alecflett@chromium.org>
+
+        IndexedDB: Stub out IDBDatabaseBackendInterface::createIndex/deleteIndex
+        https://bugs.webkit.org/show_bug.cgi?id=106117
+
+        Reviewed by Adam Barth.
+
+        Stubs for migration from WebIDBObjectStore.
+
+        * public/WebIDBDatabase.h:
+        (WebKit::WebIDBDatabase::createIndex):
+        (WebKit::WebIDBDatabase::deleteIndex):
+        (WebIDBDatabase):
+        * src/IDBDatabaseBackendProxy.cpp:
+        (WebKit::IDBDatabaseBackendProxy::createIndex):
+        (WebKit):
+        (WebKit::IDBDatabaseBackendProxy::deleteIndex):
+        * src/IDBDatabaseBackendProxy.h:
+        (IDBDatabaseBackendProxy):
+        * src/WebIDBDatabaseImpl.cpp:
+        (WebKit::WebIDBDatabaseImpl::createIndex):
+        (WebKit):
+        (WebKit::WebIDBDatabaseImpl::deleteIndex):
+        * src/WebIDBDatabaseImpl.h:
+        (WebIDBDatabaseImpl):
+        * tests/IDBDatabaseBackendTest.cpp:
+
+2013-01-05  Chris Hopman  <cjhopman@google.com>
+
+        Add function to move caret selection towards a point
+        https://bugs.webkit.org/show_bug.cgi?id=105189
+
+        Reviewed by Eric Seidel.
+
+        This function moves the selection to the corresponding point in the
+        rootEditableElement of the current selection. Used on Android for
+        the behavior of insertion handles (i.e. dragging the caret around).
+
+        * public/WebFrame.h:
+        (WebFrame):
+        * src/WebFrameImpl.cpp:
+        (WebKit::WebFrameImpl::moveCaretSelectionTowardsWindowPoint):
+        (WebKit):
+        * src/WebFrameImpl.h:
+        (WebFrameImpl):
+
+2013-01-04  James Robinson  <jamesr@chromium.org>
+
+        [chromium] Remove WebWidget::layerTreeView(), ownership is the other way around
+        https://bugs.webkit.org/show_bug.cgi?id=106139
+
+        Reviewed by Adrienne Walker.
+
+        This was added with the thought that it would be useful for transitioning code for a world where the
+        WebLayerTreeView for a given widget was owned by the WebWidgetClient instead of the WebWidget, but as it turns
+        out we've transitioned without every adding any callers to this.
+
+        * public/WebWidget.h:
+        (WebWidget):
+        * src/WebViewImpl.cpp:
+
+2013-01-04  Dana Jansens  <danakj@chromium.org>
+
+        [chromium] Remove lost-compositor-context layout tests
+        https://bugs.webkit.org/show_bug.cgi?id=106089
+
+        Reviewed by James Robinson.
+
+        Remove the loseCompositorContext() test function.
+
+        * public/WebView.h:
+        (WebView):
+        * src/WebViewImpl.cpp:
+        * src/WebViewImpl.h:
+        (WebViewImpl):
+
+2013-01-04  Adam Klein  <adamk@chromium.org>
+
+        Remove ENABLE_MUTATION_OBSERVERS #define
+        https://bugs.webkit.org/show_bug.cgi?id=105459
+
+        Reviewed by Ryosuke Niwa.
+
+        * features.gypi:
+        * src/WebKit.cpp:
+        (WebKit::initialize):
+        (WebKit::shutdown):
+
+2013-01-04  Mark Pilgrim  <pilgrim@chromium.org>
+
+        [Chromium] Update some #includes to use headers in the new Platform directory
+        https://bugs.webkit.org/show_bug.cgi?id=106092
+
+        Reviewed by Kentaro Hara.
+
+        Working towards getting rid of legacy header files in
+        WebKit/chromium/public/ and WebKit/chromium/public/platform/
+
+        * src/AsyncFileSystemChromium.cpp:
+        * src/StorageAreaProxy.cpp:
+        * src/StorageNamespaceProxy.cpp:
+        * src/WebFileSystemCallbacksImpl.cpp:
+        * src/WebGraphicsContext3D.cpp:
+        * src/WebIDBCursorImpl.h:
+        * src/WebIDBDatabaseCallbacksImpl.cpp:
+        * src/WebIDBDatabaseCallbacksImpl.h:
+        * src/WebIDBDatabaseError.cpp:
+        * src/WebIDBDatabaseImpl.h:
+        * src/WebIDBIndexImpl.h:
+        * src/WebIDBKeyPath.cpp:
+        * src/WebIDBMetadata.cpp:
+        * src/WebIDBObjectStoreImpl.h:
+        * src/WebWorkerClientImpl.cpp:
+        * src/WebWorkerRunLoop.cpp:
+        * src/WorkerFileSystemCallbacksBridge.cpp:
+        * tests/AssociatedURLLoaderTest.cpp:
+        * tests/FrameTestHelpers.cpp:
+        * tests/PopupMenuTest.cpp:
+        * tests/URLTestHelpers.cpp:
+        * tests/WebFrameTest.cpp:
+        * tests/WebPageNewSerializerTest.cpp:
+        * tests/WebPageSerializerTest.cpp:
+        * tests/WebURLRequestTest.cpp:
+        * tests/WebURLResponseTest.cpp:
+        * tests/WebUnitTests.h:
+        * tests/WebViewTest.cpp:
+
 2013-01-04  Sheriff Bot  <webkit.review.bot@gmail.com>
 
         Unreviewed.  Rolled DEPS.

@@ -439,7 +439,8 @@ html5lib/run-template.html
 http/tests/security/isolatedWorld/cross-origin-xhr.html
 
 # JSC also doesn't support setIsolatedWorldContentSecurityPolicy (webkit.org/b/100815)
-http/tests/security/isolatedWorld/bypass-main-world-csp.html
+webkit.org/b/100815 http/tests/security/isolatedWorld/bypass-main-world-csp.html [ Failure ]
+webkit.org/b/100815 http/tests/security/isolatedWorld/bypass-main-world-csp-for-xhr.html [ Failure ]
 
 # https://bugs.webkit.org/show_bug.cgi?id=63282 layerTreeAsText doesn't work for iframes
 compositing/rtl/rtl-iframe-absolute-overflow-scrolled.html
@@ -1236,6 +1237,9 @@ Bug(jernoble) [ MountainLion Lion SnowLeopard ] media/video-src-blob.html
 webkit.org/b/103663 [ MountainLion Lion SnowLeopard ] media/track/track-in-band.html
 webkit.org/b/103663 [ MountainLion Lion SnowLeopard ] media/track/track-in-band-cues-added-once.html
 
+Bug(ojan) fast/table/038-vertical.html [ Failure ImageOnlyFailure ]
+Bug(ojan) fast/table/border-collapsing/004-vertical.html [ Failure ImageOnlyFailure ]
+
 webkit.org/b/104104 fast/overflow/scrollbar-click-retains-focus.html [ Failure ]
 
 webkit.org/b/104949 fast/spatial-navigation/snav-unit-overflow-and-scroll-in-direction.html [ Failure ]
@@ -1250,8 +1254,6 @@ webkit.org/b/105049 compositing/layer-creation/fixed-position-out-of-view-scaled
 webkit.org/b/105566 media/track/track-webvtt-tc006-cue-identifiers.html [ Crash Pass ]
 webkit.org/b/105580 media/track/track-prefer-captions.html [ Crash Pass ]
 
-webkit.org/b/105606 media/track [ Crash Pass ]
-
 webkit.org/b/105567 http/tests/security/data-url-inline.css.html [ Crash Pass ]
 
 webkit.org/b/104848 fast/frames/sandboxed-iframe-parsing-space-characters.html [ Failure Pass ]
@@ -1261,8 +1263,6 @@ webkit.org/b/105601 svg/zoom/page/zoom-replaced-intrinsic-ratio-001.htm [ Crash 
 webkit.org/b/105603 http/tests/cookies/single-quoted-value.html [ Failure Pass ]
 
 webkit.org/b/105777 platform/mac/editing/spelling/autocorrection-in-textarea.html [ Failure Pass ]
-
-webkit.org/b/105778 platform/mac/accessibility/file-upload-button-subrole.html [ Failure ]
 
 webkit.org/b/105932 [ MountainLion Debug ] http/tests/inspector/resource-har-pages.html [ Crash ]
 
@@ -1279,3 +1279,9 @@ webkit.org/b/105999 [ Lion ] fast/canvas/canvas-composite-image.html [ Failure ]
 webkit.org/b/106064 fast/inline/continuation-outlines-with-layers.html [ Failure ]
 
 webkit.org/b/106075 [ Debug ] fast/regions/full-screen-video-from-region.html [ Crash ]
+
+webkit.org/b/106123 http/tests/appcache/main-resource-redirect.html [ Crash ]
+
+webkit.org/b/106151 [ Lion ] http/tests/misc/link-rel-icon-beforeload.html [ Pass Failure ]
+
+webkit.org/b/106185 fast/frames/flattening/iframe-flattening-fixed-height.html [ Pass Failure ]

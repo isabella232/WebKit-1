@@ -32,7 +32,7 @@
 #include "WebExceptionCode.h"
 #include "WebIDBDatabase.h"
 #include "WebIDBTransaction.h"
-#include "platform/WebCommon.h"
+#include <public/WebCommon.h>
 #include <wtf/PassRefPtr.h>
 #include <wtf/RefPtr.h>
 
@@ -72,6 +72,8 @@ public:
     virtual void deleteRange(long long transactionId, long long objectStoreId, const WebIDBKeyRange&, WebIDBCallbacks*) OVERRIDE;
     virtual void clear(long long transactionId, long long objectStoreId, WebIDBCallbacks*) OVERRIDE;
 
+    virtual void createIndex(long long transactionId, long long objectStoreId, long long indexId, const WebString& name, const WebIDBKeyPath&, bool unique, bool multiEntry);
+    virtual void deleteIndex(long long transactionId, long long objectStoreId, long long indexId);
 private:
     WTF::RefPtr<WebCore::IDBDatabaseBackendInterface> m_databaseBackend;
     WTF::RefPtr<IDBDatabaseCallbacksProxy> m_databaseCallbacks;

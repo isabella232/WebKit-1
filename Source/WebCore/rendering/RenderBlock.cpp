@@ -774,10 +774,6 @@ RenderBlock* RenderBlock::columnsBlockForSpanningElement(RenderObject* newChild)
 
 void RenderBlock::addChildIgnoringAnonymousColumnBlocks(RenderObject* newChild, RenderObject* beforeChild)
 {
-    // Make sure we don't append things after :after-generated content if we have it.
-    if (!beforeChild)
-        beforeChild = afterPseudoElementRenderer();
-
     if (beforeChild && beforeChild->parent() != this) {
         RenderObject* beforeChildContainer = beforeChild->parent();
         while (beforeChildContainer->parent() != this)
@@ -6148,7 +6144,7 @@ void RenderBlock::computeBlockPreferredLogicalWidths()
         }
         
         if (child->isFloating()) {
-            if (styleToUse->floating() == LeftFloat)
+            if (childStyle->floating() == LeftFloat)
                 floatLeftWidth += w;
             else
                 floatRightWidth += w;

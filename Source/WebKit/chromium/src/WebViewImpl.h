@@ -142,7 +142,6 @@ public:
     virtual void willExitFullScreen();
     virtual void didExitFullScreen();
     virtual void setCompositorSurfaceReady();
-    virtual WebLayerTreeView* webLayerTreeView();
     virtual void animate(double);
     virtual void layout(); // Also implements WebLayerTreeViewClient::layout()
     virtual void enterForceCompositingMode(bool enable) OVERRIDE;
@@ -575,8 +574,6 @@ public:
     void animateZoomAroundPoint(const WebCore::IntPoint&, AutoZoomType);
 
     void shouldUseAnimateDoubleTapTimeZeroForTesting(bool);
-
-    void loseCompositorContext(int numTimes);
 
     void enterFullScreenForElement(WebCore::Element*);
     void exitFullScreenForElement(WebCore::Element*);

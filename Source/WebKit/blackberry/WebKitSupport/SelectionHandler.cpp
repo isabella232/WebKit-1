@@ -289,7 +289,7 @@ void SelectionHandler::setCaretPosition(const WebCore::IntPoint& position)
 void SelectionHandler::inputHandlerDidFinishProcessingChange()
 {
     if (m_didSuppressCaretPositionChangedNotification)
-        notifyCaretPositionChangedIfNeeded();
+        notifyCaretPositionChangedIfNeeded(false);
 }
 
 // This function makes sure we are not reducing the selection to a caret selection.
@@ -584,6 +584,20 @@ static Node* enclosingLinkEventParentForNode(Node* node)
     return linkNode && linkNode->isLink() ? linkNode : 0;
 }
 
+bool SelectionHandler::selectNodeIfFatFingersResultIsLink(FatFingersResult fatFingersResult)
+{
+    if (!fatFingersResult.isValid())
+        return false;
+    Node* targetNode = fatFingersResult.node(FatFingersResult::ShadowContentNotAllowed);
+    ASSERT(targetNode);
+    // If the node at the point is a link, focus on the entire link, not a word.
+    if (Node* link = enclosingLinkEventParentForNode(targetNode)) {
+        selectObject(link);
+        return true;
+    }
+    return false;
+}
+
 void SelectionHandler::selectAtPoint(const WebCore::IntPoint& location)
 {
     // If point is invalid trigger selection based expansion.
@@ -592,10 +606,12 @@ void SelectionHandler::selectAtPoint(const WebCore::IntPoint& location)
         return;
     }
 
-    Node* targetNode;
     WebCore::IntPoint targetPosition;
     // FIXME: Factory this get right fat finger code into a helper.
     const FatFingersResult lastFatFingersResult = m_webPage->m_touchEventHandler->lastFatFingersResult();
+    if (selectNodeIfFatFingersResultIsLink(lastFatFingersResult))
+        return;
+
     if (lastFatFingersResult.resultMatches(location, FatFingers::Text) && lastFatFingersResult.positionWasAdjusted() && lastFatFingersResult.nodeAsElementIfApplicable()) {
         targetNode = lastFatFingersResult.node(FatFingersResult::ShadowContentNotAllowed);
         targetPosition = lastFatFingersResult.adjustedPosition();
@@ -604,16 +620,10 @@ void SelectionHandler::selectAtPoint(const WebCore::IntPoint& location)
         if (!newFatFingersResult.positionWasAdjusted())
             return;
 
+        if (selectNodeIfFatFingersResultIsLink(newFatFingersResult))
+            return;
+
         targetPosition = newFatFingersResult.adjustedPosition();
-        targetNode = newFatFingersResult.node(FatFingersResult::ShadowContentNotAllowed);
-    }
-
-    ASSERT(targetNode);
-
-    // If the node at the point is a link, focus on the entire link, not a word.
-    if (Node* link = enclosingLinkEventParentForNode(targetNode)) {
-        selectObject(link);
-        return;
     }
 
     // selectAtPoint API currently only supports WordGranularity but may be extended in the future.
@@ -1001,17 +1011,17 @@ void SelectionHandler::selectionPositionChanged(bool forceUpdateWithoutChange)
 }
 
 
-void SelectionHandler::notifyCaretPositionChangedIfNeeded()
+void SelectionHandler::notifyCaretPositionChangedIfNeeded(bool userTouchTriggered)
 {
     m_didSuppressCaretPositionChangedNotification = false;
 
     if (m_caretActive || (m_webPage->m_inputHandler->isInputMode() && m_webPage->focusedOrMainFrame()->selection()->isCaret())) {
         // This may update the caret to no longer be active.
-        caretPositionChanged();
+        caretPositionChanged(userTouchTriggered);
     }
 }
 
-void SelectionHandler::caretPositionChanged()
+void SelectionHandler::caretPositionChanged(bool userTouchTriggered)
 {
     SelectionLog(Platform::LogLevelInfo, "SelectionHandler::caretPositionChanged");
 
@@ -1020,7 +1030,7 @@ void SelectionHandler::caretPositionChanged()
     if (!m_webPage->m_inputHandler->isInputMode() && m_caretActive) {
         m_caretActive = false;
         // Send an empty caret change to turn off the caret.
-        m_webPage->m_client->notifyCaretChanged(caretLocation, m_webPage->m_touchEventHandler->lastFatFingersResult().isTextInput() /* userTouchTriggered */);
+        m_webPage->m_client->notifyCaretChanged(caretLocation, userTouchTriggered);
         return;
     }
 
@@ -1061,8 +1071,7 @@ void SelectionHandler::caretPositionChanged()
         Platform::IntRect(nodeBoundingBox).toString().c_str(),
         m_webPage->m_inputHandler->elementText().isEmpty() ? ", empty text field" : "");
 
-    m_webPage->m_client->notifyCaretChanged(caretLocation, m_webPage->m_touchEventHandler->lastFatFingersResult().isTextInput() /* userTouchTriggered */,
-        isSingleLineInput, nodeBoundingBox, m_webPage->m_inputHandler->elementText().isEmpty());
+    m_webPage->m_client->notifyCaretChanged(caretLocation, userTouchTriggered, isSingleLineInput, nodeBoundingBox, m_webPage->m_inputHandler->elementText().isEmpty());
 }
 
 bool SelectionHandler::selectionContains(const WebCore::IntPoint& point)

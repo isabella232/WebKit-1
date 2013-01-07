@@ -205,7 +205,8 @@ fast/js/i18n-bindings-locale.html
 http/tests/security/isolatedWorld/cross-origin-xhr.html
 
 # JSC also doesn't support setIsolatedWorldContentSecurityPolicy (webkit.org/b/100815)
-http/tests/security/isolatedWorld/bypass-main-world-csp.html
+webkit.org/b/100815 http/tests/security/isolatedWorld/bypass-main-world-csp.html [ Failure ]
+webkit.org/b/100815 http/tests/security/isolatedWorld/bypass-main-world-csp-for-xhr.html [ Failure ]
 
 # This test is for clients that choose to make the missing plugin indicator a button
 plugins/clicking-missing-plugin-fires-delegate.html
@@ -1106,17 +1107,6 @@ http/tests/security/isolatedWorld/didClearWindowObject.html
 # This needs more investigation
 http/tests/security/isolatedWorld/world-reuse.html
 
-# ------- missing ruby annotation support for japanese fonts
-fast/ruby/ruby-beforeafter.html
-fast/ruby/ruby-empty-rt.html
-fast/ruby/ruby-length.html
-fast/ruby/ruby-run-break.html
-fast/ruby/ruby-runs-spans.html
-fast/ruby/ruby-runs.html
-fast/ruby/ruby-simple-rp.html
-fast/ruby/ruby-simple.html
-fast/ruby/ruby-trailing.html
-
 # [Qt] http/tests/misc/favicon-loads-with-icon-loading-override.html fails
 # https://bugs.webkit.org/show_bug.cgi?id=58396
 http/tests/misc/favicon-loads-with-icon-loading-override.html
@@ -1438,10 +1428,6 @@ css3/filters/effect-reference-hw.html
 # ============================================================================= #
 # failing fast tests
 # ============================================================================= #
-
-# [Qt] fast/ruby/overhang* tests fail
-# https://bugs.webkit.org/show_bug.cgi?id=57824
-fast/ruby/overhang-vertical.html
 
 # New test flakey on Qt Linux Release introduced in r113086
 # https://bugs.webkit.org/show_bug.cgi?id=83057
@@ -2105,6 +2091,7 @@ fast/canvas/canvas-composite-canvas.html
 
 # track not functional yet.
 fast/events/constructors/track-event-constructor.html
+http/tests/security/contentSecurityPolicy/media-src-track-block.html
 http/tests/security/text-track-crossorigin.html
 
 # Linecaps wrong for zero length lines
@@ -2395,6 +2382,9 @@ webkit.org/b/90007 http/tests/security/mixedContent/insecure-audio-video-in-main
 # Skip tests in fast/text/shaping
 webkit.org/b/90951 fast/text/shaping
 
+Bug(ojan) fast/table/038-vertical.html [ Failure ImageOnlyFailure ]
+Bug(ojan) fast/table/border-collapsing/004-vertical.html [ Failure ImageOnlyFailure ]
+
 # Flaky tests
 webkit.org/b/91376 http/tests/security/sandboxed-iframe-modify-self.html [ Failure Pass ]
 webkit.org/b/91379 http/tests/security/contentSecurityPolicy/policy-does-not-affect-child.html [ Failure Pass ]
@@ -2460,6 +2450,9 @@ webkit.org/b/101539 editing/execCommand/switch-list-type-with-orphaned-li.html [
 webkit.org/b/100846 inspector-protocol/debugger-pause-dedicated-worker.html [ Skip ]
 webkit.org/b/100846 inspector-protocol/debugger-terminate-dedicated-worker-while-paused.html [ Skip ]
 
+Bug(ojan) fast/table/038-vertical.html [ Failure ImageOnlyFailure ]
+Bug(ojan) fast/table/border-collapsing/004-vertical.html [ Failure ImageOnlyFailure ]
+
 # QT still has the CC toggle button, not the menu of tracks.
 webkit.org/b/101670 media/video-controls-captions-trackmenu.html [ Skip ]
 webkit.org/b/101670 media/video-controls-captions-trackmenu-sorted.html [ Skip ]
@@ -2512,6 +2505,8 @@ webkit.org/b/85522 http/tests/security/sandboxed-iframe-form-top.html [ Skip ]
 fast/css-generated-content/pseudo-animation.html
 fast/css-generated-content/pseudo-transition.html
 
-# https://bugs.webkit.org/show_bug.cgi?id=106016
 # [Qt] New fast/workers/worker-document-leak.html fails
-fast/workers/worker-document-leak.html
+webkit.org/b/106016 fast/workers/worker-document-leak.html
+
+# [Qt] New fast/regions/full-screen-video-from-region.html times out
+webkit.org/b/106095 fast/regions/full-screen-video-from-region.html

@@ -1,3 +1,855 @@
+2013-01-07  Mihnea Ovidenie  <mihnea@adobe.com>
+
+        Unreviewed. Unskip tests fixed in http://trac.webkit.org/changeset/138937.
+
+        * platform/efl/TestExpectations:
+        * platform/gtk/TestExpectations:
+
+2013-01-07  Mihnea Ovidenie  <mihnea@adobe.com>
+
+        [GTK][EFL][Qt] New tests fast/regions/region-rule-nested-region-rule.html, fast/regions/region-styling-mediaquery.html are failing
+        https://bugs.webkit.org/show_bug.cgi?id=106168
+
+        Reviewed by Csaba Osztrogonác.
+
+        Specify a margin-top: 0 both for the h1 element that is flowed into region and the h1 element in the ref test to ensure
+        the h1 element is displayed at the same position in the region and in the containing article element.
+        Also, cleaned up the tests a little.
+
+        * fast/regions/region-rule-nested-region-rule-expected.html:
+        * fast/regions/region-rule-nested-region-rule.html:
+        * fast/regions/region-styling-mediaquery-expected.html:
+        * fast/regions/region-styling-mediaquery.html:
+
+2013-01-07  Christophe Dumez  <christophe.dumez@intel.com>
+
+        Regression(r138786): Causes webaudio tests to crash
+        https://bugs.webkit.org/show_bug.cgi?id=106182
+
+        Reviewed by Philippe Normand.
+
+        Unskip several webaudio tests for EFL WK2 now that the
+        regression was fixed.
+
+        * platform/efl-wk2/TestExpectations:
+
+2013-01-07  János Badics  <jbadics@inf.u-szeged.hu>
+
+        [Qt] Gardening.
+        r138820: Skipped a test because track feature is not functional yet.
+        r138838: Added new baseline to fast/writing-mode/table-percent-width-quirk-expected.txt.
+
+        Reviewed by Csaba Osztrogonác.
+
+        * platform/qt/TestExpectations:
+        * platform/qt/fast/writing-mode/table-percent-width-quirk-expected.txt:
+
+2013-01-07  Allan Sandfeld Jensen  <allan.jensen@digia.com>
+
+        Unskip now passing ruby tests.
+
+        Unreviewed gardening.
+
+        Verified to match rendering in other ports.
+
+        * platform/qt/TestExpectations:
+        * platform/qt/fast/ruby/ruby-beforeafter-expected.txt: Added.
+        * platform/qt/fast/ruby/ruby-empty-rt-expected.txt: Added.
+        * platform/qt/fast/ruby/ruby-length-expected.txt: Added.
+        * platform/qt/fast/ruby/ruby-run-break-expected.txt: Added.
+        * platform/qt/fast/ruby/ruby-runs-expected.txt: Added.
+        * platform/qt/fast/ruby/ruby-runs-spans-expected.txt: Added.
+        * platform/qt/fast/ruby/ruby-simple-expected.txt: Added.
+        * platform/qt/fast/ruby/ruby-simple-rp-expected.txt: Added.
+        * platform/qt/fast/ruby/ruby-trailing-expected.txt: Added.
+
+2013-01-07  Christophe Dumez  <christophe.dumez@intel.com>
+
+        Unreviewed EFL gardening.
+
+        Mark 2 fast/regions ref tests as failing for EFL
+        port. Those tests were introduced in r138854.
+
+        * platform/efl/TestExpectations:
+
+2013-01-07  Christophe Dumez  <christophe.dumez@intel.com>
+
+        Unreviewed EFL gardening.
+
+        Mark several webaudio tests as crashing on WK2 EFL
+        due to a regression in r138786.
+
+        * platform/efl-wk2/TestExpectations:
+
+2013-01-06  Abhishek Arya  <inferno@chromium.org>
+
+        Heap-use-after-free in DocumentLoader::stopLoading
+        https://bugs.webkit.org/show_bug.cgi?id=103656
+
+        Reviewed by Eric Seidel.
+
+        * fast/dom/ready-state-change-crash-expected.txt: Added.
+        * fast/dom/ready-state-change-crash.html: Added.
+
+2013-01-06  Abhishek Arya  <inferno@chromium.org>
+
+        Heap-use-after-free in WebCore::Document::implicitClose
+        https://bugs.webkit.org/show_bug.cgi?id=105655
+
+        Reviewed by Eric Seidel.
+
+        * fast/dom/window-load-crash-expected.txt: Added.
+        * fast/dom/window-load-crash.html: Added.
+
+2013-01-06  Mike West  <mkwst@chromium.org>
+
+        Seamless: IFrame's padding isn't taken into account when calculating its height.
+        https://bugs.webkit.org/show_bug.cgi?id=106167
+
+        Reviewed by Eric Seidel.
+
+        * fast/frames/seamless/seamless-border-padding-expected.txt:
+            Adjusts the previously failing expectations to the correct values.
+
+2013-01-05  Ryosuke Niwa  <rniwa@webkit.org>
+
+        Add failing test expectations to some tile drawing tests on Mac WebKit2.
+        The failures are tracked by the bug 106187.
+
+        * platform/mac-wk2/TestExpectations:
+
+2013-01-05  Ryosuke Niwa  <rniwa@webkit.org>
+
+        Revert an erroneous change from r138874.
+
+        http/tests/misc/link-rel-icon-beforeload.html had been skipped prior to r138874
+        and it should continued to be.
+
+        * platform/mac-wk2/TestExpectations:
+
+2013-01-05  Ryosuke Niwa  <rniwa@webkit.org>
+
+        Add a flaky test expectation for the bug 106185.
+
+        * platform/mac/TestExpectations:
+
+2013-01-05  Robert Hogan  <robert@webkit.org>
+
+        Heap-use-after-free in WebCore::RenderBlock::insertIntoTrackedRendererMaps
+        https://bugs.webkit.org/show_bug.cgi?id=105654
+
+        Reviewed by Simon Fraser.
+
+        * fast/block/sticky-position-containing-block-crash-expected.txt: Added.
+        * fast/block/sticky-position-containing-block-crash.html: Added.
+
+2013-01-05  Mike West  <mkwst@chromium.org>
+
+        Deflaking http/tests/security/contentSecurityPolicy/report-uri-from-javascript.html
+        https://bugs.webkit.org/show_bug.cgi?id=106165
+
+        Reviewed by Adam Barth.
+
+        The original test chose its violation mechanism poorly. The existing injection file
+        injected two violations, which generated reports delivered in a random order. This
+        patch creates a new injection JavaScript file that injects a single image, generating
+        a single report. That should deflake the test.
+
+        * http/tests/security/contentSecurityPolicy/report-uri-from-javascript-expected.txt:
+        * http/tests/security/contentSecurityPolicy/report-uri-from-javascript.html:
+        * http/tests/security/contentSecurityPolicy/resources/inject-image.js:
+            Adjusting the test to be deterministic.
+        * platform/chromium/TestExpectations:
+        * platform/efl/TestExpectations:
+        * platform/mac/TestExpectations:
+        * platform/qt/TestExpectations:
+            Unskipping test.
+
+
+2013-01-05  Mike West  <mkwst@chromium.org>
+
+        seamless iframes don't take border into account properly and make the iframe too small.
+        https://bugs.webkit.org/show_bug.cgi?id=90827
+
+        Reviewed by Ojan Vafai.
+
+        * fast/frames/seamless/seamless-border-padding-expected.txt: Added.
+        * fast/frames/seamless/seamless-border-padding.html: Added.
+            This test checks the IFrame's handling of borders and padding.
+            Things work correctly for width after this patch, but there are
+            still issues with padding and height, which will be fixed in
+            http://wkbug.com/106167
+
+2013-01-05  Min Qin  <qinmin@chromium.org>
+
+        MediaControls::show() should make controls opaque
+        https://bugs.webkit.org/show_bug.cgi?id=106034
+
+        Reviewed by Eric Carlson.
+
+        Add tests to check that video controls are shown when exiting from fullscreen.
+
+        * media/video-controls-visible-exiting-fullscreen-expected.txt: Added.
+        * media/video-controls-visible-exiting-fullscreen.html: Added.
+
+2013-01-05  Michael Pruett  <michael@68k.org>
+
+        [WK2] Exclude IndexedDB tests which use eventSender.beginDragWithFiles()
+        https://bugs.webkit.org/show_bug.cgi?id=106138
+
+        Reviewed by Alexey Proskuryakov.
+
+        * platform/wk2/TestExpectations:
+
+2013-01-05  Alec Flett  <alecflett@chromium.org>
+
+        IndexedDB: Migrate backend ObjectStore calls to use transaction id
+        https://bugs.webkit.org/show_bug.cgi?id=102741
+
+        Reviewed by Tony Chang.
+
+        Add additional count() tests for multi-entry indexes, not previously
+        covered.
+
+        * storage/indexeddb/index-multientry-expected.txt:
+        * storage/indexeddb/resources/index-multientry.js:
+        (.transaction.oncomplete):
+        (verifyCount.request.onsuccess.request.onsuccess):
+        (verifyCount.request.onsuccess):
+        (verifyCount):
+
+2013-01-05  Robert Hogan  <robert@webkit.org>
+
+        Max width of a floated container with floated children calculated incorrectly
+        https://bugs.webkit.org/show_bug.cgi?id=47975
+
+        Reviewed by Levi Weintraub.
+
+        * fast/block/float/max-width-clear-float-with-overflow-hidden-expected.html: Added.
+        * fast/block/float/max-width-clear-float-with-overflow-hidden.html: Added.
+
+2013-01-05  Takashi Sakamoto  <tasak@google.com>
+
+        [Shadow DOM]: Some named elements in ShadowTree visible on nesting document level
+        https://bugs.webkit.org/show_bug.cgi?id=105617
+
+        Reviewed by Dimitri Glazkov.
+
+        * fast/dom/shadow/element-name-in-shadow-expected.txt: Added.
+        * fast/dom/shadow/element-name-in-shadow.html: Added.
+
+2013-01-05  Zan Dobersek  <zandobersek@gmail.com>
+
+        Unreviewed GTK gardening
+
+        Skipping http/tests/multipart/multipart-wait-before-boundary.html for now,
+        the test is intermittently timing out on release builders despite being assigned
+        a SLOW expectation, thus unnecessarily painting bots red. A bug identifier is also
+        added for this test.
+
+        * platform/gtk/TestExpectations:
+
+2013-01-05  Christophe Dumez  <christophe.dumez@intel.com>
+
+        Unreviewed EFL gardening.
+
+        Rebaseline several tests after r138838.
+
+        * platform/efl/fast/ruby/base-shorter-than-text-expected.png:
+        * platform/efl/fast/ruby/base-shorter-than-text-expected.txt:
+        * platform/efl/fast/table/038-vertical-expected.png:
+        * platform/efl/fast/table/038-vertical-expected.txt:
+        * platform/efl/fast/table/border-collapsing/004-vertical-expected.png:
+        * platform/efl/fast/table/border-collapsing/004-vertical-expected.txt:
+
+2013-01-04  Zan Dobersek  <zandobersek@gmail.com>
+
+        Unreviewed GTK gardening.
+
+        Adding failure expectations for two CSS Regions tests added in r138854.
+        Modifying a failure expectation for a CSS Image Set test that now times out after r138857.
+
+        * platform/gtk/TestExpectations:
+
+2013-01-04  Ryosuke Niwa  <rniwa@webkit.org>
+
+        Remove a duplicate test expectation since the bug 106153 has been merged into the bug 106165.
+
+        * platform/chromium/TestExpectations:
+
+2013-01-04  Ryosuke Niwa  <rniwa@webkit.org>
+
+        Add a flaky failure expectation to a test added by r138834.
+        The failure is tracked by the bug 106165.
+
+        * platform/chromium/TestExpectations:
+        * platform/efl/TestExpectations:
+        * platform/mac/TestExpectations:
+        * platform/qt/TestExpectations:
+
+2013-01-04  Terry Anderson  <tdanderson@chromium.org>
+
+        Unreviewed gardening. fast/ruby/base-shorter-than-text.html is failing on
+        Lion and MountainLion.
+
+        * platform/chromium/TestExpectations:
+
+2013-01-04  Terry Anderson  <tdanderson@chromium.org>
+
+        Unreviewed gardening. Test is flaky on Linux and Mac.
+
+        * platform/chromium/TestExpectations:
+
+2013-01-04  Ryosuke Niwa  <rniwa@webkit.org>
+
+        Add a Mac test expectation for the test that has been intermittently failing on Mac Lion WebKit1.
+        The failure is tracked by the bug 106151.
+
+        * platform/mac-wk2/TestExpectations:
+        * platform/mac/TestExpectations:
+
+2013-01-04  Ryosuke Niwa  <rniwa@webkit.org>
+
+        Remove superfluous chromium test baselines for the test added by r138862 after r138869.
+
+        * platform/chromium-linux-x86/fast/js/dfg-check-structure-elimination-for-non-cell-expected.txt: Removed.
+        * platform/chromium-linux/fast/js/dfg-check-structure-elimination-for-non-cell-expected.txt: Removed.
+        * platform/chromium-mac-lion/fast/js: Removed.
+        * platform/chromium-mac-lion/fast/js/dfg-check-structure-elimination-for-non-cell-expected.txt: Removed.
+        * platform/chromium-mac-snowleopard/fast/js/dfg-check-structure-elimination-for-non-cell-expected.txt: Removed.
+        * platform/chromium-mac/fast/js/dfg-check-structure-elimination-for-non-cell-expected.txt: Removed.
+        * platform/chromium/fast/js/dfg-check-structure-elimination-for-non-cell-expected.txt: Copied from LayoutTests/platform/chromium-linux-x86/fast/js/dfg-check-structure-elimination-for-non-cell-expected.txt.
+
+2013-01-04  Terry Anderson  <tdanderson@chromium.org>
+
+        Unreviewed gardening. Adding new baselines for chromium.
+
+        * platform/chromium-linux-x86/fast/js/dfg-check-structure-elimination-for-non-cell-expected.txt: Added.
+        * platform/chromium-linux/fast/js/dfg-check-structure-elimination-for-non-cell-expected.txt: Added.
+        * platform/chromium-mac-lion/fast/js/dfg-check-structure-elimination-for-non-cell-expected.txt: Added.
+        * platform/chromium-mac-snowleopard/fast/js/dfg-check-structure-elimination-for-non-cell-expected.txt: Added.
+        * platform/chromium-mac/fast/js/dfg-check-structure-elimination-for-non-cell-expected.txt: Added.
+
+2013-01-04  Eric Carlson  <eric.carlson@apple.com>
+
+        Unreviewed cleanup. Remove media/track/ from Mac TestExpectations because 
+        https://bugs.webkit.org/show_bug.cgi?id=105606 was fixed.
+
+        * platform/mac/TestExpectations:
+
+2013-01-04  Filip Pizlo  <fpizlo@apple.com>
+
+        DFG should not elide CheckStructure if it's needed to perform a cell check
+        https://bugs.webkit.org/show_bug.cgi?id=106074
+
+        Reviewed by Ryosuke Niwa.
+
+        * fast/js/dfg-check-structure-elimination-for-non-cell-expected.txt: Added.
+        * fast/js/dfg-check-structure-elimination-for-non-cell.html: Added.
+        * fast/js/jsc-test-list:
+        * fast/js/script-tests/dfg-check-structure-elimination-for-non-cell.js: Added.
+        (foo):
+        (bar):
+        (baz):
+
+2013-01-04  Terry Anderson  <tdanderson@chromium.org>
+
+        Unreviewed gardening. Temporarily skipping three tests
+        in webaudio/codec-tests/vorbis because they need a 
+        special rebaseline.
+
+        * platform/chromium/TestExpectations:
+
+2013-01-04  Ryosuke Niwa  <rniwa@webkit.org>
+
+        REGRESSION(r138394): platform/mac/accessibility/file-upload-button-subrole.html is failing
+        https://bugs.webkit.org/show_bug.cgi?id=105778
+
+        Reviewed by Alexey Proskuryakov.
+
+        Removed the old test expectations.
+
+        * platform/mac/TestExpectations:
+
+2013-01-04  Rick Byers  <rbyers@chromium.org>
+
+        URL duplication in mouse cursor tests mean minor typos can cause flakiness
+        https://bugs.webkit.org/show_bug.cgi?id=104952
+
+        Reviewed by Eric Seidel.
+
+        Replace the explicit list of images to preload with code that extracts
+        URLs from style definitions.  Also move all this image preload code to
+        a common helper file so that it can easily be used by other tests.
+
+        * fast/events/mouse-cursor-image-set.html:
+        * fast/events/mouse-cursor-multiframecur.html:
+        * fast/events/mouse-cursor.html:
+        * fast/js/resources/image-preload-helper.js: Added.
+        (preloadImagesFromStyle):
+        (onComplete):
+        (imagesToLoad):
+
+2013-01-04  Xianzhu Wang  <wangxianzhu@chromium.org>
+
+        Unreviewd. Fix break caused by using old internals.settings.setEnableCompositingForFixedPosition
+        (has been renamed to setAcceleratedCompositingForFixedPositionEnabled).
+
+        * compositing/layer-creation/no-compositing-for-fixed-position-under-transform.html:
+
+2013-01-04  Zoltan Horvath  <zoltan@webkit.org>
+
+        [CSS Regions] @region rules inside media queries are ignored
+        https://bugs.webkit.org/show_bug.cgi?id=102388
+
+        Reviewed by David Hyatt.
+
+        Using @region rules in media queries was ignored, but we should accept and apply it.
+
+        * fast/regions/region-rule-nested-region-rule-expected.html: Added.
+        * fast/regions/region-rule-nested-region-rule.html: Added.
+        * fast/regions/region-styling-mediaquery-expected.html: Added.
+        * fast/regions/region-styling-mediaquery.html: Added.
+
+2013-01-04  Abhishek Arya  <inferno@chromium.org>
+
+        Crash in WebCore::RenderBlock::willBeDestroyed
+        https://bugs.webkit.org/show_bug.cgi?id=103455
+
+        Reviewed by Eric Seidel.
+
+        * fast/multicol/continuation-crash-expected.txt: Added.
+        * fast/multicol/continuation-crash.html: Added.
+
+2013-01-04  Chris Rogers  <crogers@google.com>
+
+        Implement WebIDL-style string constants in WebAudio (part 2)
+        https://bugs.webkit.org/show_bug.cgi?id=105977
+
+        Reviewed by Kentaro Hara.
+
+        * webaudio/audiopannernode-basic-expected.txt: Removed.
+        * webaudio/audiopannernode-basic.html: Removed.
+        * webaudio/biquad-getFrequencyResponse-expected.txt:
+        * webaudio/biquad-getFrequencyResponse.html:
+        * webaudio/biquadfilternode-basic-expected.txt:
+        * webaudio/biquadfilternode-basic.html:
+        * webaudio/pannernode-basic-expected.txt: Added.
+        * webaudio/pannernode-basic.html: Added.
+        * webaudio/resources/biquad-testing.js:
+        * webaudio/resources/distance-model-testing.js:
+        (createGraph):
+        (.return.renderedBuffer):
+        (checkDistanceResult):
+        * webaudio/resources/panner-model-testing.js:
+        (createGraph):
+
+2013-01-04  Terry Anderson  <tdanderson@chromium.org>
+
+        Unreviewed gardening. The following two tests are flaky on XP:
+        svg/custom/feComponentTransfer-Table.svg
+        svg/custom/embedding-external-svgs.xhtml
+
+        * platform/chromium/TestExpectations:
+
+2013-01-04  Rick Byers  <rbyers@chromium.org>
+
+        window.Touch and TouchList should exist when touch events are enabled
+        https://bugs.webkit.org/show_bug.cgi?id=96295
+
+        Reviewed by Kentaro Hara.
+
+        Add new expected constructors and instanceof checks.
+
+        * fast/events/touch/document-create-touch-list-expected.txt:
+        * fast/events/touch/script-tests/document-create-touch-list.js:
+        * platform/efl/fast/js/global-constructors-expected.txt:
+        * platform/qt-5.0/fast/js/global-constructors-expected.txt:
+        * platform/qt/fast/js/global-constructors-expected.txt:
+
+2013-01-04  Xianzhu Wang  <wangxianzhu@chromium.org>
+
+        Test compositing and slow scrolling behavior of fixed position elements under transformed elements
+        https://bugs.webkit.org/show_bug.cgi?id=103470
+
+        Reviewed by Simon Fraser.
+
+        Add test case for the behavior change about fixed position elements under transformed elements in bug 102543 by the way.
+
+        * compositing/layer-creation/no-compositing-for-fixed-position-under-transform-expected.txt: Added.
+        * compositing/layer-creation/no-compositing-for-fixed-position-under-transform.html: Added.
+
+2013-01-04  Tony Chang  <tony@chromium.org>
+
+        Remove some autogenerated settings from InternalSettings.idl
+        https://bugs.webkit.org/show_bug.cgi?id=106114
+
+        Reviewed by Ojan Vafai.
+
+        Rename setters to match the name in Settings.in
+        setEnableCompositingForFixedPosition -> setAcceleratedCompositingForFixedPositionEnabled
+        setEnableCompositingForScrollableFrames -> setAcceleratedCompositingForScrollableFramesEnabled
+
+        * compositing/absolute-inside-out-of-view-fixed.html:
+        * compositing/geometry/fixed-position-composited-page-scale-down.html:
+        * compositing/geometry/fixed-position-composited-page-scale-scroll.html:
+        * compositing/geometry/fixed-position-composited-page-scale-smaller-than-viewport.html:
+        * compositing/geometry/fixed-position-composited-page-scale.html:
+        * compositing/geometry/fixed-position-composited-switch.html:
+        * compositing/geometry/fixed-position-iframe-composited-page-scale-down.html:
+        * compositing/geometry/fixed-position-iframe-composited-page-scale.html:
+        * compositing/geometry/fixed-position-transform-composited-page-scale-down.html:
+        * compositing/geometry/fixed-position-transform-composited-page-scale.html:
+        * compositing/layer-creation/fixed-position-out-of-view-scaled-iframe-scroll.html:
+        * compositing/layer-creation/fixed-position-out-of-view-scaled-iframe.html:
+        * compositing/layer-creation/fixed-position-out-of-view-scaled-scroll.html:
+        * compositing/layer-creation/fixed-position-out-of-view-scaled.html:
+        * compositing/layer-creation/fixed-position-out-of-view-scroll-reason.html:
+        * compositing/layer-creation/fixed-position-out-of-view.html:
+        * compositing/overflow/automatically-opt-into-composited-scrolling.html:
+        * platform/chromium/compositing/force-compositing-mode/force-composite-empty.html:
+        * platform/chromium/compositing/force-compositing-mode/no-overflow-iframe-layer.html:
+        * platform/chromium/compositing/force-compositing-mode/overflow-hidden-iframe-layer.html:
+        * platform/chromium/compositing/force-compositing-mode/overflow-iframe-enter-compositing.html:
+        * platform/chromium/compositing/force-compositing-mode/overflow-iframe-layer.html:
+        * platform/chromium/compositing/force-compositing-mode/overflow-iframe-leave-compositing.html:
+
+2013-01-04  Ojan Vafai  <ojan@chromium.org>
+
+        Vertical writing mode can overflow fixed size grandparent container
+        https://bugs.webkit.org/show_bug.cgi?id=93655
+
+        Reviewed by David Hyatt.
+
+        * fast/writing-mode/auto-sizing-orthogonal-flows-expected.txt: Added.
+        * fast/writing-mode/auto-sizing-orthogonal-flows.html: Added.
+        * fast/writing-mode/percentage-height-orthogonal-writing-modes-expected.txt:
+        * fast/writing-mode/percentage-height-orthogonal-writing-modes-quirks-expected.txt:
+        * fast/writing-mode/percentage-height-orthogonal-writing-modes-quirks.html:
+        * fast/writing-mode/percentage-height-orthogonal-writing-modes.html:
+        * fast/writing-mode/table-percent-width-quirk-expected.png:
+        * fast/writing-mode/table-percent-width-quirk-expected.txt:
+        This test now correctly uses the containing blocks's availableHeight instead of the
+        initial containing block's height to size the perpendicular child.
+        * platform/chromium-linux/fast/ruby/base-shorter-than-text-expected.txt:
+        * platform/chromium-linux/fast/table/038-vertical-expected.png:
+        * platform/chromium-linux/fast/table/border-collapsing/004-vertical-expected.png:
+        The extra wrapping in this test is just because we subtract the body's margin when
+        computing the available height. If you force the table's container 16px smaller,
+        you get the same rendering at tip of tree WebKit.
+        * platform/chromium-win/fast/table/038-vertical-expected.txt:
+        * platform/chromium-win/fast/table/border-collapsing/004-vertical-expected.txt:
+        * platform/chromium/TestExpectations:
+        * platform/efl/TestExpectations:
+        * platform/gtk/TestExpectations:
+        * platform/mac/TestExpectations:
+        * platform/qt/TestExpectations:
+        Add tests that will need rebaseline once this patch lands.
+
+2013-01-04  Joshua Bell  <jsbell@chromium.org>
+
+        Add tests for WebIDL type conversions
+        https://bugs.webkit.org/show_bug.cgi?id=105927
+
+        Reviewed by Adam Barth.
+
+        This currently fails long long conversions of non-finites (which should map to 0). Patch
+        in progress at: http://wkbug.com/96798
+
+        * fast/js/webidl-type-mapping-expected.txt: Added.
+        * fast/js/webidl-type-mapping.html: Added.
+
+2013-01-04  Stephen White  <senorblanco@chromium.org>
+
+        Invalidation of some SVG filter attributes on HTML content doesn't work 
+        https://bugs.webkit.org/show_bug.cgi?id=105635
+
+        Reviewed by Dirk Schulze.
+
+        New reftest to verify filter attribute change invalidations.
+
+        * css3/filters/reference-filter-update-on-attribute-change-expected.html: Added.
+        * css3/filters/reference-filter-update-on-attribute-change.html: Added.
+
+2013-01-04  Mike West  <mkwst@chromium.org>
+
+        CSP 1.1: Experiment with adding line numbers to violation reports.
+        https://bugs.webkit.org/show_bug.cgi?id=105374
+
+        Reviewed by Adam Barth.
+
+        * http/tests/security/contentSecurityPolicy/report-uri-from-inline-javascript-expected.txt: Added.
+        * http/tests/security/contentSecurityPolicy/report-uri-from-inline-javascript.html: Added.
+        * http/tests/security/contentSecurityPolicy/report-uri-from-javascript-expected.txt: Added.
+        * http/tests/security/contentSecurityPolicy/report-uri-from-javascript.html: Added.
+
+2013-01-04  Mike Lawther  <mikelawther@chromium.org>
+
+        CSS3 calc: working with translate and scale transforms
+        https://bugs.webkit.org/show_bug.cgi?id=105985
+
+        Reviewed by Ojan Vafai.
+
+        * css3/calc/transforms-scale-expected.html: Added.
+        * css3/calc/transforms-scale.html: Added.
+        * css3/calc/transforms-translate-expected.html: Added.
+        * css3/calc/transforms-translate.html: Added.
+
+2013-01-04  Elliott Sprehn  <esprehn@chromium.org>
+
+        PseudoElement should never dispatch events
+        https://bugs.webkit.org/show_bug.cgi?id=106048
+
+        Reviewed by Ojan Vafai.
+
+        Add a test that events don't get dispatched from pseudo elements. The
+        only way right now to cause this is with transitions or animations.
+
+        * fast/css-generated-content/pseudo-element-events-expected.txt: Added.
+        * fast/css-generated-content/pseudo-element-events.html: Added.
+
+2013-01-04  Terry Anderson  <tdanderson@chromium.org>
+
+        Unreviewed gardening. Adding Lion image baseline for
+        fast/regions/full-screen-video-from-region.html
+
+        * platform/chromium-mac-lion/fast/regions/full-screen-video-from-region-expected.png: Added.
+
+2013-01-04  Ryosuke Niwa  <rniwa@webkit.org>
+
+        Add a crash test expectation for the crashing test on Mac WebKit1 after r138782,
+        which attempted to fix the crash but appears to did so only on WebKit2.
+
+        The failure is tracked by the bug 106123.
+
+        * platform/mac-wk2/TestExpectations:
+        * platform/mac/TestExpectations:
+
+2013-01-04  Terry Anderson  <tdanderson@chromium.org>
+
+        The following two tests are starting to fail while on the verge of
+        timing out. Adding Failure to their modifiers.
+
+        fast/canvas/webgl/context-creation-and-destruction.html
+        platform/chromium/virtual/gpu/fast/canvas/webgl/context-creation-and-destruction.html
+
+        * platform/chromium/TestExpectations:
+
+2013-01-04  Ryosuke Niwa  <rniwa@webkit.org>
+
+        Add Mac baselines for subpixel tests added in r125794, r137945, and r138200.
+        https://bugs.webkit.org/show_bug.cgi?id=106070
+
+        Reviewed by Emil A Eklund.
+
+        Added baselines.
+
+        * platform/mac/fast/sub-pixel: Added.
+        * platform/mac/fast/sub-pixel/sub-pixel-accumulates-to-layers-expected.png: Added.
+        * platform/mac/fast/sub-pixel/sub-pixel-accumulates-to-layers-expected.txt: Added.
+        * platform/mac/fast/sub-pixel/sub-pixel-iframe-copy-on-scroll-expected.png: Added.
+        * platform/mac/fast/sub-pixel/sub-pixel-iframe-copy-on-scroll-expected.txt: Added.
+        * platform/mac/fast/sub-pixel/transformed-iframe-copy-on-scroll-expected.png: Added.
+        * platform/mac/fast/sub-pixel/transformed-iframe-copy-on-scroll-expected.txt: Added.
+
+2013-01-04  Stephen White  <senorblanco@chromium.org>
+
+        CSS url() filters with forward references don't work
+        https://bugs.webkit.org/show_bug.cgi?id=90405
+
+        Based on a patch by Keyar Hood.
+
+        Reviewed by Dirk Schulze.
+
+        * css3/filters/effect-reference-after-expected.html: Added.
+        * css3/filters/effect-reference-after.html: Added.
+        * css3/filters/effect-reference-delete-crash.html: Added.
+        * css3/filters/effect-reference-delete-expected.html: Added.
+        * css3/filters/effect-reference-delete.html: Added.
+        * css3/filters/effect-reference-removed-while-pending-resources-expected.html: Added.
+        * css3/filters/effect-reference-removed-while-pending-resources.html: Added.
+        * css3/filters/effect-reference-rename-expected.html: Added.
+        * css3/filters/effect-reference-rename.html: Added.
+        * css3/filters/effect-reference-reset-style-delete-crash-expected.txt: Added.
+        * css3/filters/effect-reference-reset-style-delete-crash.html: Added.
+        * css3/filters/script-tests/effect-reference-delete-crash.js: Added.
+        * css3/filters/script-tests/effect-reference-reset-style-delete-crash.js: Added.
+        * svg/filters/filter-cycle-expected.html: Added.
+        * svg/filters/filter-cycle.html: Added.
+
+2013-01-04  Mike West  <mkwst@chromium.org>
+
+        CSP: Blocked 'track' sources should only log once to the console.
+        https://bugs.webkit.org/show_bug.cgi?id=106091
+
+        Reviewed by Eric Carlson.
+
+        * http/tests/security/contentSecurityPolicy/media-src-track-block-expected.txt: Added.
+        * http/tests/security/contentSecurityPolicy/media-src-track-block.html: Added.
+        * http/tests/security/contentSecurityPolicy/resources/track.srt: Added.
+
+2013-01-04  Mike West  <mkwst@chromium.org>
+
+        CSP: 'frame-src' should block redirects to invalid sources.
+        https://bugs.webkit.org/show_bug.cgi?id=106084
+
+        Reviewed by Adam Barth.
+
+        * http/tests/security/contentSecurityPolicy/frame-src-redirect-blocked-expected.txt: Added.
+        * http/tests/security/contentSecurityPolicy/frame-src-redirect-blocked.html: Added.
+
+2013-01-04  Mike West  <mkwst@chromium.org>
+
+        CSP: XHR from an isolated world should bypass a page's policy.
+        https://bugs.webkit.org/show_bug.cgi?id=104480
+
+        Reviewed by Adam Barth.
+
+        * http/tests/security/isolatedWorld/bypass-main-world-csp-for-xhr-expected.txt: Added.
+        * http/tests/security/isolatedWorld/bypass-main-world-csp-for-xhr.html: Added.
+            A new test! How wonderful!
+        * platform/efl/TestExpectations:
+        * platform/mac/TestExpectations:
+        * platform/qt/TestExpectations:
+        * platform/win/TestExpectations:
+        * platform/wincairo/TestExpectations:
+            Skipping the new test on ports that don't support it.
+
+2013-01-04  Mike Lawther  <mikelawther@chromium.org>
+
+        CSS3 calc: mixed percent/absolute for border-radius
+        https://bugs.webkit.org/show_bug.cgi?id=106046
+
+        Reviewed by Ojan Vafai.
+
+        * css3/calc/border-radius-expected.html: Renamed from LayoutTests/css3/calc/border-radius-expected-mismatch.html.
+        * css3/calc/border-radius.html:
+
+2013-01-04  Zan Dobersek  <zandobersek@gmail.com>
+
+        Unreviewed GTK gardening.
+
+        Again updating baseline for editing/deleting/delete-to-select-table.html.
+
+        * platform/gtk/editing/deleting/delete-to-select-table-expected.txt:
+
+2013-01-04  Dana Jansens  <danakj@chromium.org>
+
+        [chromium] Remove lost-compositor-context layout tests
+        https://bugs.webkit.org/show_bug.cgi?id=106089
+
+        Reviewed by James Robinson.
+
+        Better test coverage for these issues is now provided by the unit tests
+        in the compositor's cc/layer_tree_host_unittest_context.cc file.
+
+        * platform/chromium-linux-x86/platform/chromium/compositing/webgl-loses-compositor-context-expected.png: Removed.
+        * platform/chromium-linux/platform/chromium/compositing/webgl-loses-compositor-context-expected.png: Removed.
+        * platform/chromium-mac-snowleopard/platform/chromium/compositing/lost-compositor-context-expected.png: Removed.
+        * platform/chromium-mac-snowleopard/platform/chromium/compositing/lost-compositor-context-permanently-expected.png: Removed.
+        * platform/chromium-mac-snowleopard/platform/chromium/compositing/lost-compositor-context-twice-expected.png: Removed.
+        * platform/chromium-mac-snowleopard/platform/chromium/compositing/lost-compositor-context-with-rendersurface-expected.png: Removed.
+        * platform/chromium-mac-snowleopard/platform/chromium/compositing/webgl-loses-compositor-context-expected.png: Removed.
+        * platform/chromium-mac/platform/chromium/compositing/lost-compositor-context-with-video-expected.png: Removed.
+        * platform/chromium-win-xp/platform/chromium/compositing/webgl-loses-compositor-context-expected.png: Removed.
+        * platform/chromium/compositing/lost-compositor-context-expected.png: Removed.
+        * platform/chromium/compositing/lost-compositor-context-expected.txt: Removed.
+        * platform/chromium/compositing/lost-compositor-context-permanently-expected.png: Removed.
+        * platform/chromium/compositing/lost-compositor-context-permanently-expected.txt: Removed.
+        * platform/chromium/compositing/lost-compositor-context-permanently.html: Removed.
+        * platform/chromium/compositing/lost-compositor-context-twice-expected.png: Removed.
+        * platform/chromium/compositing/lost-compositor-context-twice-expected.txt: Removed.
+        * platform/chromium/compositing/lost-compositor-context-twice.html: Removed.
+        * platform/chromium/compositing/lost-compositor-context-with-rendersurface-expected.png: Removed.
+        * platform/chromium/compositing/lost-compositor-context-with-rendersurface-expected.txt: Removed.
+        * platform/chromium/compositing/lost-compositor-context-with-rendersurface.html: Removed.
+        * platform/chromium/compositing/lost-compositor-context-with-video-expected.png: Removed.
+        * platform/chromium/compositing/lost-compositor-context-with-video-expected.txt: Removed.
+        * platform/chromium/compositing/lost-compositor-context-with-video.html: Removed.
+        * platform/chromium/compositing/lost-compositor-context.html: Removed.
+        * platform/chromium/compositing/webgl-loses-compositor-context-expected.png: Removed.
+        * platform/chromium/compositing/webgl-loses-compositor-context-expected.txt: Removed.
+        * platform/chromium/compositing/webgl-loses-compositor-context.html: Removed.
+
+2013-01-04  Terry Anderson  <tdanderson@chromium.org>
+
+        Unreviewed gardening. fast/repaint/japanese-rl-selection-repaint-in-regions.html
+        has image-only failures on SnowLeopard and Lion.
+
+        * platform/chromium/TestExpectations:
+
+2013-01-04  Adam Klein  <adamk@chromium.org>
+
+        Remove ENABLE_MUTATION_OBSERVERS #define
+        https://bugs.webkit.org/show_bug.cgi?id=105459
+
+        Reviewed by Ryosuke Niwa.
+
+        Remove references to ENABLE(MUTATION_OBSERVERS) from tests.
+
+        * fast/dom/MutationObserver/cross-document.html:
+        * fast/dom/MutationObserver/database-callback-delivery.html:
+        * fast/dom/MutationObserver/disconnect-cancel-pending.html:
+        * fast/dom/MutationObserver/filesystem-callback-delivery.html:
+        * fast/dom/MutationObserver/mutation-observer-constructor.html:
+        * fast/dom/MutationObserver/observe-attributes.html:
+        * fast/dom/MutationObserver/observe-characterdata.html:
+        * fast/dom/MutationObserver/observe-childList.html:
+        * fast/dom/MutationObserver/observe-exceptions.html:
+        * fast/dom/MutationObserver/observe-subtree.html:
+        * fast/dom/MutationObserver/takeRecords.html:
+
+2013-01-04  Rick Byers  <rbyers@chromium.org>
+
+        Existence of window.Touch can break websites mobile device detection
+        https://bugs.webkit.org/show_bug.cgi?id=106071
+
+        Revert http://trac.webkit.org/changeset/135562 for now while I work
+        on a slightly safer version.
+
+        Reviewed by Ojan Vafai.
+
+        * fast/events/touch/document-create-touch-list-expected.txt:
+        * fast/events/touch/script-tests/document-create-touch-list.js:
+        * platform/efl/fast/js/global-constructors-expected.txt:
+        * platform/qt-5.0/fast/js/global-constructors-expected.txt:
+        * platform/qt/fast/js/global-constructors-expected.txt:
+
+2013-01-04  Csaba Osztrogonác  <ossy@webkit.org>
+
+        [Qt][WK2] Unreviewed gardening, unskip a now passing test.
+
+        * platform/qt-5.0-wk2/TestExpectations:
+
+2013-01-04  Csaba Osztrogonác  <ossy@webkit.org>
+
+        [Qt] Unreviewed gardening, skip a new failing test.
+
+        * platform/qt/TestExpectations:
+
+2013-01-04  Terry Anderson  <tdanderson@chromium.org>
+
+        Unreviewed gardening. New image baselines for test
+        fast/regions/full-screen-video-from-region.html
+
+        * platform/chromium-mac-snowleopard/fast/regions/full-screen-video-from-region-expected.png: Added.
+        * platform/chromium-mac/fast/regions/full-screen-video-from-region-expected.png:
+        * platform/chromium-win-xp/fast/regions/full-screen-video-from-region-expected.png: Added.
+
+2013-01-04  Zan Dobersek  <zandobersek@gmail.com>
+
+        Unreviewed GTK gardening.
+
+        Rebaselining an editing test after r138654.
+
+        Adding failure expectations for two tests added in r138632.
+        Add a temporary failure expectation for transitions/transitions-parsing.html,
+        the test is fixed but just requires a clean build. It shouldn't paint the bots
+        red until then.
+
+        * platform/gtk/TestExpectations:
+        * platform/gtk/editing/deleting/delete-to-select-table-expected.txt: Added.
+
 2013-01-04  Zan Dobersek  <zandobersek@gmail.com>
 
         REGRESSION (r138184): transitions/transitions-parsing.html is failing on GTK

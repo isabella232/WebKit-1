@@ -1,3 +1,304 @@
+2013-01-04  Sam Weinig  <sam@webkit.org>
+
+        Remove WebProcessInitialization and NetworkProcessInitialization by putting the rest of initialization in ChildProcess derived classes
+        https://bugs.webkit.org/show_bug.cgi?id=106163
+
+        Reviewed by Darin Adler.
+
+        Adds ChildProcess::initializeProcessName() and the catchall ChildProcess::initializeProcess()
+        as the last pieces to have all the initialization from WebProcessInitialization and NetworkProcessInitialization
+        captured in ChildProcess and derived classes.
+
+        * NetworkProcess/NetworkProcess.cpp:
+        (WebKit::NetworkProcess::initializeProcessName):
+        (WebKit::NetworkProcess::initializeSandbox):
+        * NetworkProcess/NetworkProcess.h:
+        (NetworkProcess):
+        * NetworkProcess/mac/NetworkProcessInitialization.h: Removed.
+        * NetworkProcess/mac/NetworkProcessInitialization.mm: Removed.
+        * NetworkProcess/mac/NetworkProcessMac.mm:
+        (WebKit::NetworkProcess::initializeProcessName):
+        (WebKit::NetworkProcess::initializeSandbox):
+        * NetworkProcess/mac/NetworkProcessMainMac.mm:
+        (WebKit::NetworkProcessMain):
+        * PluginProcess/PluginProcess.cpp:
+        (WebKit::PluginProcess::initializeProcess):
+        * PluginProcess/PluginProcess.h:
+        (PluginProcess):
+        * PluginProcess/mac/PluginProcessMac.mm:
+        (WebKit::PluginProcess::platformInitializeProcess):
+        * PluginProcess/mac/PluginProcessMainMac.mm:
+        (WebKit::PluginProcessMain):
+        * PluginProcess/qt/PluginProcessQt.cpp:
+        (WebKit::PluginProcess::platformInitializeProcess):
+        (WebKit::PluginProcess::platformInitializePluginProcess):
+        * PluginProcess/unix/PluginProcessUnix.cpp:
+        (WebKit::PluginProcess::platformInitializeProcess):
+        * Shared/ChildProcess.cpp:
+        (WebKit::ChildProcess::initialize):
+        (WebKit::ChildProcess::initializeProcess):
+        (WebKit::ChildProcess::initializeProcessName):
+        (WebKit::ChildProcess::initializeSandbox):
+        (WebKit::ChildProcess::initializeConnection):
+        * Shared/ChildProcess.h:
+        (ChildProcess):
+        * SharedWorkerProcess/mac/SharedWorkerProcessMainMac.mm:
+        (WebKit::SharedWorkerProcessMain):
+        * WebKit2.xcodeproj/project.pbxproj:
+        * WebProcess/WebProcess.cpp:
+        (WebKit::WebProcess::initializeProcess):
+        (WebKit::WebProcess::initializeProcessName):
+        (WebKit::WebProcess::initializeSandbox):
+        * WebProcess/WebProcess.h:
+        (WebProcess):
+        * WebProcess/mac/WebProcessInitialization.h: Removed.
+        * WebProcess/mac/WebProcessInitialization.mm: Removed.
+        * WebProcess/mac/WebProcessMac.mm:
+        (WebKit::WebProcess::initializeSandbox):
+        (WebKit::WebProcess::initializeProcessName):
+        (WebKit::WebProcess::platformInitializeProcess):
+        * WebProcess/mac/WebProcessMainMac.mm:
+        (WebKit::WebProcessMain):
+        * WebProcess/mac/WebProcessServiceEntryPoints.mm:
+        (WebKit::WebProcessServiceEventHandler):
+        (initializeWebProcessForWebProcessServiceForWebKitDevelopment):
+
+2013-01-04  Sam Weinig  <sam@webkit.org>
+
+        Fix failing API test.
+
+        * WebProcess/WebProcess.cpp:
+        (WebKit::WebProcess::initializeConnection):
+        (WebKit::WebProcess::initializeWebProcess):
+        The WebConnectionToUIProcess needs to be initialized before the injected bundle is,
+        so that if the user tries to use it, its there.
+
+2013-01-04  Sam Weinig  <sam@webkit.org>
+
+        Consolidate all the one time initialization functions into a single InitializeWebKit2() super function
+        https://bugs.webkit.org/show_bug.cgi?id=106161
+
+        Reviewed by Simon Fraser.
+
+        Adds InitializeWebKit2 and uses it.
+
+        * CMakeLists.txt:
+        * GNUmakefile.list.am:
+        * NetworkProcess/NetworkProcess.cpp:
+        (WebKit::NetworkProcess::initializeNetworkProcess):
+        * NetworkProcess/mac/NetworkProcessInitialization.mm:
+        (WebKit::initializeNetworkProcess):
+        * PluginProcess/mac/PluginProcessMainMac.mm:
+        (WebKit::PluginProcessMain):
+        * Shared/WebKit2Initialize.cpp: Copied from Source/WebKit2/NetworkProcess/mac/NetworkProcessInitialization.mm.
+        (WebKit::InitializeWebKit2):
+        * Shared/WebKit2Initialize.h: Copied from Source/WebKit2/NetworkProcess/mac/NetworkProcessInitialization.mm.
+        (WebKit):
+        * SharedWorkerProcess/mac/SharedWorkerProcessMainMac.mm:
+        (WebKit::SharedWorkerProcessMain):
+        * Target.pri:
+        * WebKit2.xcodeproj/project.pbxproj:
+        * WebProcess/WebProcess.cpp:
+        (WebKit::WebProcess::WebProcess):
+        * WebProcess/mac/WebProcessInitialization.mm:
+        (WebKit::initializeWebProcess):
+
+2013-01-04  Sam Weinig  <sam@webkit.org>
+
+        Follow up to https://bugs.webkit.org/show_bug.cgi?id=106144, fixing some
+        of Alexey's review comments.
+
+        * NetworkProcess/NetworkProcess.cpp:
+        (WebKit::NetworkProcess::downloadProxyConnection):
+        (WebKit::NetworkProcess::createNetworkConnectionToWebProcess):
+        * PluginProcess/PluginProcess.cpp:
+        (WebKit::PluginProcess::createWebProcessConnection):
+        (WebKit::PluginProcess::getSitesWithData):
+        (WebKit::PluginProcess::clearSiteData):
+        * Shared/ChildProcess.h:
+        (WebKit::ChildProcess::parentProcessConnection):
+        * SharedWorkerProcess/SharedWorkerProcess.h:
+        * WebProcess/WebProcess.cpp:
+        (WebKit::WebProcess::downloadProxyConnection):
+        (WebKit::WebProcess::addVisitedLink):
+        (WebKit::WebProcess::removeWebFrame):
+        (WebKit::WebProcess::getSitesWithPluginData):
+        (WebKit::WebProcess::clearPluginSiteData):
+        (WebKit::WebProcess::addPlugInAutoStartOrigin):
+        (WebKit::WebProcess::plugInDidReceiveUserInteraction):
+        (WebKit::WebProcess::getWebCoreStatistics):
+
+2013-01-04  Sam Weinig  <sam@webkit.org>
+
+        Consolidate process initialization in ChildProcess
+        https://bugs.webkit.org/show_bug.cgi?id=106144
+
+        Reviewed by Alexey Proskuryakov.
+
+        Consolidate more functionality down into ChildProcess.
+
+        * NetworkProcess/NetworkProcess.cpp:
+        (WebKit::NetworkProcess::didReceiveMessage):
+        (WebKit::NetworkProcess::didReceiveSyncMessage):
+        (WebKit::NetworkProcess::downloadProxyConnection):
+        (WebKit::NetworkProcess::initializeNetworkProcess):
+        (WebKit::NetworkProcess::createNetworkConnectionToWebProcess):
+        (WebKit::NetworkProcess::initializeSandbox):
+        * NetworkProcess/NetworkProcess.h:
+        * NetworkProcess/mac/NetworkProcessInitialization.h:
+        * NetworkProcess/mac/NetworkProcessInitialization.mm:
+        (WebKit::initializeNetworkProcess):
+        * NetworkProcess/mac/NetworkProcessMac.mm:
+        (WebKit::NetworkProcess::platformInitializeNetworkProcess):
+        * NetworkProcess/mac/NetworkProcessMainMac.mm:
+        (WebKit::NetworkProcessMain):
+        * PluginProcess/PluginProcess.cpp:
+        (WebKit::PluginProcess::PluginProcess):
+        (WebKit::PluginProcess::initializePluginProcess):
+        (WebKit::PluginProcess::createWebProcessConnection):
+        (WebKit::PluginProcess::getSitesWithData):
+        (WebKit::PluginProcess::clearSiteData):
+        * PluginProcess/PluginProcess.h:
+        (PluginProcess):
+        * PluginProcess/mac/PluginProcessMac.mm:
+        (WebKit::initializeShim):
+        (WebKit::initializeCocoaOverrides):
+        (WebKit::PluginProcess::platformInitialize):
+        (WebKit::PluginProcess::platformInitializePluginProcess):
+        * PluginProcess/mac/PluginProcessMainMac.mm:
+        (WebKit::PluginProcessMain):
+        * PluginProcess/qt/PluginProcessMainQt.cpp:
+        (WebKit::PluginProcessMain):
+        * PluginProcess/qt/PluginProcessQt.cpp:
+        (WebKit::PluginProcess::platformInitializePluginProcess):
+        * PluginProcess/unix/PluginProcessMainUnix.cpp:
+        (WebKit::PluginProcessMainUnix):
+        * PluginProcess/unix/PluginProcessUnix.cpp:
+        (WebKit::PluginProcess::platformInitializePluginProcess):
+        * Shared/ChildProcess.cpp:
+        (WebKit::ChildProcess::ChildProcess):
+        (WebKit::watchdogCallback):
+        (WebKit::didCloseOnConnectionWorkQueue):
+        (WebKit::ChildProcess::initialize):
+        (WebKit::ChildProcess::initializeConnection):
+        (WebKit::ChildProcess::initializeSandbox):
+        (WebKit::ChildProcess::terminate):
+        * Shared/ChildProcess.h:
+        (ChildProcessInitializationParameters):
+        (ChildProcess):
+        (WebKit::ChildProcess::connection):
+        (WebKit::ChildProcess::destinationID):
+        (WebKit::ChildProcess::messageReceiverMap):
+        * SharedWorkerProcess/SharedWorkerProcess.cpp:
+        (WebKit::SharedWorkerProcess::initializeSharedWorkerProcess):
+        * SharedWorkerProcess/SharedWorkerProcess.h:
+        (SharedWorkerProcess):
+        * SharedWorkerProcess/mac/SharedWorkerProcessMac.mm:
+        (WebKit::SharedWorkerProcess::platformInitializeSharedWorkerProcess):
+        * SharedWorkerProcess/mac/SharedWorkerProcessMainMac.mm:
+        (WebKit::SharedWorkerProcessMain):
+        * WebProcess/WebProcess.cpp:
+        (WebKit::WebProcess::initializeConnection):
+        (WebKit::WebProcess::downloadProxyConnection):
+        (WebKit::WebProcess::initializeWebProcess):
+        (WebKit::WebProcess::terminate):
+        (WebKit::WebProcess::didReceiveSyncMessage):
+        (WebKit::WebProcess::didReceiveMessage):
+        (WebKit::WebProcess::removeWebFrame):
+        (WebKit::WebProcess::initializeSandbox):
+        * WebProcess/WebProcess.h:
+        * WebProcess/efl/WebProcessMainEfl.cpp:
+        (WebKit::WebProcessMainEfl):
+        * WebProcess/gtk/WebProcessMainGtk.cpp:
+        (WebKit::WebProcessMainGtk):
+        * WebProcess/mac/WebProcessInitialization.h:
+        * WebProcess/mac/WebProcessInitialization.mm:
+        (WebKit::initializeWebProcess):
+        * WebProcess/mac/WebProcessMac.mm:
+        (WebKit::WebProcess::platformInitialize):
+        * WebProcess/mac/WebProcessMainMac.mm:
+        (WebKit::WebProcessMain):
+        * WebProcess/mac/WebProcessServiceEntryPoints.mm:
+        (WebKit::WebProcessServiceEventHandler):
+        (initializeWebProcessForWebProcessServiceForWebKitDevelopment):
+        * WebProcess/qt/WebProcessMainQt.cpp:
+        (WebKit::WebProcessMainQt):
+
+2013-01-04  Tim Horton  <timothy_horton@apple.com>
+
+        [wk2] Remove non-visible tiles from the layer tree
+        https://bugs.webkit.org/show_bug.cgi?id=106061
+        <rdar://problem/12761821>
+
+        Reviewed by Simon Fraser.
+
+        Add a setting to enable aggressive retention of TileCache tiles. If enabled,
+        TileCache will generally try to keep around all tiles. This setting is off by default.
+
+        * Shared/WebPreferencesStore.h:
+        * UIProcess/API/C/WKPreferences.cpp:
+        (WKPreferencesSetAggressiveTileRetentionEnabled):
+        (WKPreferencesGetAggressiveTileRetentionEnabled):
+        * UIProcess/API/C/WKPreferencesPrivate.h:
+        * WebProcess/WebPage/WebPage.cpp:
+        (WebKit::WebPage::updatePreferences):
+        * WebProcess/WebPage/mac/TiledCoreAnimationDrawingArea.mm:
+        (WebKit::TiledCoreAnimationDrawingArea::updatePreferences): Forward the setting to the TiledBacking.
+
+2013-01-04  Sam Weinig  <sam@webkit.org>
+
+        Make process initialization more uniform by renaming initialization methods and removing extraneous parameters
+        https://bugs.webkit.org/show_bug.cgi?id=106120
+
+        Reviewed by Brady Eidson.
+
+        Rename FooProcess::initialize() -> FooProcess::initializeConnection() and removes
+        the RunLoop parameter since it is always the same the as RunLoop::main().
+
+        * NetworkProcess/NetworkProcess.cpp:
+        (WebKit::NetworkProcess::initializeConnection):
+        * NetworkProcess/NetworkProcess.h:
+        (NetworkProcess):
+        * NetworkProcess/mac/NetworkProcessInitialization.mm:
+        (WebKit::initializeNetworkProcess):
+        * PluginProcess/PluginProcess.cpp:
+        (WebKit::PluginProcess::initializeConnection):
+        * PluginProcess/PluginProcess.h:
+        * PluginProcess/mac/PluginProcessMainMac.mm:
+        (WebKit::PluginProcessMain):
+        * PluginProcess/qt/PluginProcessMainQt.cpp:
+        (WebKit::PluginProcessMain):
+        * PluginProcess/unix/PluginProcessMainUnix.cpp:
+        (WebKit::PluginProcessMainUnix):
+        * SharedWorkerProcess/SharedWorkerProcess.cpp:
+        (WebKit::SharedWorkerProcess::initializeConnection):
+        * SharedWorkerProcess/SharedWorkerProcess.h:
+        (SharedWorkerProcess):
+        * SharedWorkerProcess/mac/SharedWorkerProcessMainMac.mm:
+        (WebKit::SharedWorkerProcessMain):
+
+2013-01-04  Adam Klein  <adamk@chromium.org>
+
+        Remove ENABLE_MUTATION_OBSERVERS #define
+        https://bugs.webkit.org/show_bug.cgi?id=105459
+
+        Reviewed by Ryosuke Niwa.
+
+        * Configurations/FeatureDefines.xcconfig:
+
+2013-01-04  Carlos Garcia Campos  <cgarcia@igalia.com>
+
+        [WK2] [Gtk] crash when web inspector is attached, and window height is reduced.
+        https://bugs.webkit.org/show_bug.cgi?id=106052
+
+        Reviewed by Martin Robinson.
+
+        Do not allocate more size for the inspector view than its parent
+        size. Also make sure that the view size is always at least 1.
+
+        * UIProcess/API/gtk/WebKitWebViewBase.cpp:
+        (resizeWebKitWebViewBaseFromAllocation):
+
 2013-01-04  Milian Wolff  <milian.wolff@kdab.com>
 
         [Qt] Fix compilation when WebKit1 is disabled but Qt widgets are available

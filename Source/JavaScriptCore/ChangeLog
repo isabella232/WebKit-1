@@ -1,3 +1,285 @@
+2013-01-06  Filip Pizlo  <fpizlo@apple.com>
+
+        Simplify slow case profiling
+        https://bugs.webkit.org/show_bug.cgi?id=106208
+
+        Reviewed by Mark Rowe.
+        
+        Removing the minimum execution ratio portion of slow case profiling, which allows
+        the removal of a field from CodeBlock. This appears to be performance neutral,
+        implying that the complexity incurred by the previous heuristic was purely
+        harmful: it made the code more complicated, and it made CodeBlock larger, without
+        resulting in any measurable benefits.
+
+        * bytecode/CodeBlock.cpp:
+        (JSC::CodeBlock::CodeBlock):
+        * bytecode/CodeBlock.h:
+        (JSC::CodeBlock::likelyToTakeSlowCase):
+        (JSC::CodeBlock::couldTakeSlowCase):
+        (JSC::CodeBlock::likelyToTakeSpecialFastCase):
+        (JSC::CodeBlock::couldTakeSpecialFastCase):
+        (JSC::CodeBlock::likelyToTakeDeepestSlowCase):
+        (JSC::CodeBlock::likelyToTakeAnySlowCase):
+        * jit/JIT.cpp:
+        (JSC::JIT::privateCompile):
+        * runtime/Options.h:
+
+2013-01-05  Filip Pizlo  <fpizlo@apple.com>
+
+        DFG should inline closure calls
+        https://bugs.webkit.org/show_bug.cgi?id=106067
+
+        Reviewed by Gavin Barraclough.
+        
+        This adds initial support for inlining closure calls to the DFG. A call is considered
+        to be a closure call when the JSFunction* varies, but always has the same executable.
+        We already have closure call inline caching in both JITs, which works by checking that
+        the callee has an expected structure (as a cheap way of detecting that it is in fact
+        a JSFunction) and an expected executable. Closure call inlining uses profiling data
+        aggregated by CallLinkStatus to decide when to specialize the call to the particular
+        structure/executable, and inline the call rather than emitting a call sequence. When
+        we choose to do a closure inline rather than an ordinary inline, a number of things
+        change about how inlining is performed:
+        
+        - The inline is guarded by a CheckStructure/CheckExecutable rather than a
+          CheckFunction.
+        
+        - Instead of propagating a constant value for the scope, we emit GetMyScope every time
+          that the scope is needed, which loads the scope from a local variable. We do similar
+          things for the callee.
+        
+        - The prologue of the inlined code includes SetMyScope and SetCallee nodes to eagerly
+          plant the scope and callee into the "true call frame", i.e. the place on the stack
+          where the call frame would have been if the call had been actually performed. This
+          allows GetMyScope/GetCallee to work as they would if the code wasn't inlined. It
+          also allows for trivial handling of scope and callee for call frame reconstruction
+          upon stack introspection and during OSR.
+        
+        - A new node called GetScope is introduced, which just gets the scope of a function.
+          This node has the expected CSE support. This allows for the
+          SetMyScope(GetScope(@function)) sequence to set up the scope in the true call frame.
+        
+        - GetMyScope/GetCallee CSE can match against SetMyScope/SetCallee, which means that
+          the GetMyScope/GetCallee nodes emitted during parsing are often removed during CSE,
+          if we can prove that it is safe to do so.
+        
+        - Inlining heuristics are adjusted to grok the cost of inlining a closure. We are
+          less likely to inline a closure call than we are to inline a normal call, since we
+          end up emitting more code for closures due to CheckStructure, CheckExecutable,
+          GetScope, SetMyScope, and SetCallee.
+        
+        Additionally, I've fixed the VariableEventStream to ensure that we don't attempt to
+        plant Undefined into the true call frames. This was previously a harmless oversight,
+        but it becomes quite bad if OSR is relying on the scope/callee already having been
+        set and not subsequently clobbered by the OSR itself.
+        
+        This is a ~60% speed-up on programs that frequently make calls to closures. It's
+        neutral on V8v7 and other major benchmark suites.
+        
+        The lack of a definite speed-up is likely due the fact that closure inlining currently
+        does not do any cardinality [1] optimizations. We don't observe when a closure was
+        constructed within its caller, and so used the scope from its caller; and furthermore
+        we have no facility to detect when the scope is single. All scoped variable accesses
+        are assumed to be multiple instead. A subsequent step will be to ensure that closure
+        call inlining will be single and loving it.
+        
+        [1] Single and loving it: Must-alias analysis for higher-order languages. Suresh
+            Jagannathan, Peter Thiemann, Stephen Weeks, and Andrew Wright. In POPL '98.
+
+        * bytecode/CallLinkStatus.cpp:
+        (JSC::CallLinkStatus::dump):
+        * bytecode/CallLinkStatus.h:
+        (JSC::CallLinkStatus::isClosureCall):
+        (CallLinkStatus):
+        * bytecode/CodeBlock.cpp:
+        (JSC::CodeBlock::globalObjectFor):
+        (JSC):
+        * bytecode/CodeBlock.h:
+        (CodeBlock):
+        * bytecode/CodeOrigin.cpp:
+        (JSC::InlineCallFrame::dump):
+        * dfg/DFGAbstractState.cpp:
+        (JSC::DFG::AbstractState::execute):
+        * dfg/DFGByteCodeParser.cpp:
+        (ByteCodeParser):
+        (JSC::DFG::ByteCodeParser::handleCall):
+        (JSC::DFG::ByteCodeParser::emitFunctionChecks):
+        (JSC::DFG::ByteCodeParser::handleInlining):
+        * dfg/DFGCSEPhase.cpp:
+        (JSC::DFG::CSEPhase::pureCSE):
+        (CSEPhase):
+        (JSC::DFG::CSEPhase::getCalleeLoadElimination):
+        (JSC::DFG::CSEPhase::checkExecutableElimination):
+        (JSC::DFG::CSEPhase::getMyScopeLoadElimination):
+        (JSC::DFG::CSEPhase::performNodeCSE):
+        * dfg/DFGCapabilities.cpp:
+        (JSC::DFG::mightInlineFunctionForClosureCall):
+        * dfg/DFGCapabilities.h:
+        (DFG):
+        (JSC::DFG::mightInlineFunctionForClosureCall):
+        (JSC::DFG::canInlineFunctionForClosureCall):
+        (JSC::DFG::canInlineFunctionFor):
+        * dfg/DFGNode.h:
+        (Node):
+        (JSC::DFG::Node::hasExecutable):
+        (JSC::DFG::Node::executable):
+        * dfg/DFGNodeType.h:
+        (DFG):
+        * dfg/DFGPredictionPropagationPhase.cpp:
+        (JSC::DFG::PredictionPropagationPhase::propagate):
+        * dfg/DFGSpeculativeJIT32_64.cpp:
+        (JSC::DFG::SpeculativeJIT::compile):
+        * dfg/DFGSpeculativeJIT64.cpp:
+        (JSC::DFG::SpeculativeJIT::compile):
+        * dfg/DFGVariableEventStream.cpp:
+        (JSC::DFG::VariableEventStream::reconstruct):
+        * runtime/Options.h:
+        (JSC):
+
+2013-01-05  Filip Pizlo  <fpizlo@apple.com>
+
+        Data flow paths that carry non-numbers, non-undefined, non-null values should not cause subtractions and arithmetic additions (i.e. ++) to speculate double
+        https://bugs.webkit.org/show_bug.cgi?id=106190
+
+        Reviewed by Sam Weinig.
+        
+        The problem is that the DFG logic for deciding when to speculate integer was
+        confusing the special case of ValueAdd (where non-numeric values should cause us
+        to not speculate integer, because we want to fall off into the generic case) with
+        the more normal case of ArithAdd and ArithSub (where we want to speculate integer
+        unless we have evidence that the operands are doubles, since the DFG doesn't have
+        generic handling of non-numeric arithmetic). Prior to this change doing a - b where
+        either a or b were possibly non-numeric would always force the subtraction to be
+        done using doubles.
+
+        * dfg/DFGGraph.h:
+        (JSC::DFG::Graph::addSpeculationMode):
+        (Graph):
+        (JSC::DFG::Graph::valueAddSpeculationMode):
+        (JSC::DFG::Graph::arithAddSpeculationMode):
+        (JSC::DFG::Graph::addImmediateShouldSpeculateInteger):
+
+2013-01-04  Filip Pizlo  <fpizlo@apple.com>
+
+        DFG should trust array profiling over value profiling
+        https://bugs.webkit.org/show_bug.cgi?id=106155
+
+        Reviewed by Gavin Barraclough.
+        
+        The real problem is that prediction propagation is not flow-sensitive. We had code
+        like:
+        
+        var a = (some load from memory); // returns either an array or false
+        if (a)
+            a[i] = v;
+        
+        Because 'a' could be 'false', we were emitting a fully generic unoptimized PutByVal.
+        This patch changes ArrayMode to ignore the type of the base of an array access, if
+        array profiling tells us that the array access can be optimized.
+        
+        In the future, we could probably make this work even better with some flow
+        sensitivity in the prediction propagator, but I also tend to think that this is a
+        more robust overall solution. If we ever did want to support array accesses on
+        array-or-false then we should change the array profiler to be able to tell us that
+        this is what is going on.
+        
+        3.7% speed-up on V8/earley.
+
+        * dfg/DFGArrayMode.cpp:
+        (JSC::DFG::ArrayMode::refine):
+
+2013-01-04  Filip Pizlo  <fpizlo@apple.com>
+
+        Rationalize exit site profiling for calls
+        https://bugs.webkit.org/show_bug.cgi?id=106150
+
+        Reviewed by Sam Weinig.
+        
+        This adds two new exit kinds for calls: BadFunction and BadExecutable. The latter is not used
+        yet, but is already integrated with profiling. CheckFunction uses a BadFunction speculation
+        instead of BadCache, now. This allows CallLinkStatus to turn itself into a closure call status
+        if we had a BadFunction exit site but the CallLinkInfo told us to use a non-closure call. This
+        might happen if we had call unlinking that led to information loss along the way.
+        
+        No performance impact. This is meant as another step towards inlining closure calls.
+
+        * bytecode/CallLinkStatus.cpp:
+        * bytecode/CallLinkStatus.h:
+        (JSC::CallLinkStatus::setIsProved):
+        (JSC::CallLinkStatus::setHasBadFunctionExitSite):
+        (CallLinkStatus):
+        (JSC::CallLinkStatus::setHasBadCacheExitSite):
+        (JSC::CallLinkStatus::setHasBadExecutableExitSite):
+        * bytecode/ExitKind.cpp:
+        (JSC::exitKindToString):
+        * bytecode/ExitKind.h:
+        * dfg/DFGByteCodeParser.cpp:
+        (JSC::DFG::ByteCodeParser::handleCall):
+        * dfg/DFGSpeculativeJIT32_64.cpp:
+        (JSC::DFG::SpeculativeJIT::compile):
+        * dfg/DFGSpeculativeJIT64.cpp:
+        (JSC::DFG::SpeculativeJIT::compile):
+
+2013-01-03  Filip Pizlo  <fpizlo@apple.com>
+
+        DFG should not elide CheckStructure if it's needed to perform a cell check
+        https://bugs.webkit.org/show_bug.cgi?id=106074
+
+        Reviewed by Ryosuke Niwa.
+        
+        The problem here was that the constant folding phase was misinterpreting the meaning of the sets
+        in DFG::AbstractValue.  AbstractValue describes a constraint on the values that a variable (i.e.
+        a DFG Node, or a virtual register, i.e. local or argument) may have. It does so by containing
+        four sets: the set of JSValues (either empty, the singleton set containing one JSValue, or the
+        set of all JSValues); the set of "current known" structures, i.e. the set of structures that you
+        already know that this value may have right now (also either empty, the singleton set, or the set
+        of all structures); the set of "future possible" structures, i.e. the set of structures that this
+        value could have in the future if none of the structure transition watchpoints for those
+        structures had fired (also empty, singleton, or all); and the set of types, which is a
+        SpeculatedType bitmask. The correct way to interpret the sets is to think of the AbstractValue as
+        the intersection of these three sets of values:
+        
+        - The set of JSValues that have a type that belongs to the m_type set.
+        - If m_value is not the empty value then: the set of all JSValues that are == m_value;
+                                            else: the set of all JSValues.
+          where '==' is as defined by JSValue::operator==.
+        - Union of { the set of all cells that have a structure that belongs to m_currentKnownStructure }
+               and { the set of all JSValues that are not cells }.
+        
+        You can then further intersect this set with the following set, if you guard the code with
+        watchpoints on all structures in the m_futurePossibleStructure:
+        
+        - Union of { the set of all cells that have a structure that belongs to m_futurePossibleStructure }
+               and { the set of all JSValues that are not cells }.
+        
+        One way to think of this is that m_currentKnownStructure is filtered by m_futurePossibleStructure
+        (i.e. is set to the intersection of m_currentKnownStructure and m_futurePossibleStructure), if the
+        code for which you're doing this is always preceded by watchpoints on all structures in
+        m_futurePossibleStructure, and is always before any side-effects that could change the structures
+        of objects.
+        
+        The incorrect optimization related to CheckStructure. CheckStructure checks that the value is a
+        cell, and that it has a particular structure. It was incorrectly assuming that you could eliminate
+        the CheckStructure, if m_currentKnownStructure contained the structure that CheckStructure was
+        checking. But this is not the case, since m_currentKnownStructure does not prove that the value is
+        a cell with a particular structure; it only proves that if the value was a cell then it would have
+        a particular structure. Hence, to eliminate CheckStructure, it is also necessary to check that
+        AbstractValue::m_type contains only cells (i.e. isCellSpeculation(m_type) == true).
+        
+        It wasn't doing that, and this changes makes sure that it does do that.
+
+        * dfg/DFGConstantFoldingPhase.cpp:
+        (JSC::DFG::ConstantFoldingPhase::foldConstants):
+
+2013-01-04  Adam Klein  <adamk@chromium.org>
+
+        Remove ENABLE_MUTATION_OBSERVERS #define
+        https://bugs.webkit.org/show_bug.cgi?id=105459
+
+        Reviewed by Ryosuke Niwa.
+
+        * Configurations/FeatureDefines.xcconfig:
+
 2013-01-03  Filip Pizlo  <fpizlo@apple.com>
 
         DFG::ByteCodeCache serves little or no purpose ever since we decided to keep bytecode around permanently
