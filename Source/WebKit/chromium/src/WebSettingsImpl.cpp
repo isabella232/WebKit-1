@@ -293,6 +293,11 @@ void WebSettingsImpl::setXSSAuditorEnabled(bool enabled)
     m_settings->setXSSAuditorEnabled(enabled);
 }
 
+void WebSettingsImpl::setUnsafePluginPastingEnabled(bool enabled)
+{
+    m_settings->setUnsafePluginPastingEnabled(enabled);
+}
+
 void WebSettingsImpl::setDNSPrefetchingEnabled(bool enabled)
 {
     m_settings->setDNSPrefetchingEnabled(enabled);
@@ -502,6 +507,11 @@ void WebSettingsImpl::setAcceleratedFiltersEnabled(bool enabled)
 void WebSettingsImpl::setAccelerated2dCanvasEnabled(bool enabled)
 {
     m_settings->setAccelerated2dCanvasEnabled(enabled);
+}
+
+void WebSettingsImpl::setAntialiased2dCanvasEnabled(bool enabled)
+{
+    m_settings->setAntialiased2dCanvasEnabled(enabled);
 }
 
 void WebSettingsImpl::setDeferred2dCanvasEnabled(bool enabled)
@@ -722,6 +732,11 @@ bool WebSettingsImpl::applyPageScaleFactorInCompositor() const
 void WebSettingsImpl::setAllowCustomScrollbarInMainFrame(bool enabled)
 {
     m_settings->setAllowCustomScrollbarInMainFrame(enabled);
+}
+
+void WebSettingsImpl::setCompositedScrollingForFramesEnabled(bool enabled)
+{
+    m_settings->setCompositedScrollingForFramesEnabled(enabled);
 }
 
 } // namespace WebKit

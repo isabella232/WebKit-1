@@ -1963,6 +1963,8 @@ bool EventHandler::updateDragAndDrop(const PlatformMouseEvent& event, Clipboard*
     if (newTarget && newTarget->isTextNode())
         newTarget = newTarget->parentNode();
 
+    m_autoscrollController->updateDragAndDrop(newTarget.get(), event.position(), event.timestamp());
+
     if (m_dragTarget != newTarget) {
         // FIXME: this ordering was explicitly chosen to match WinIE. However,
         // it is sometimes incorrect when dragging within subframes, as seen with
@@ -2599,10 +2601,13 @@ bool EventHandler::isScrollbarHandlingGestures() const
 bool EventHandler::handleGestureScrollCore(const PlatformGestureEvent& gestureEvent, PlatformWheelEventGranularity granularity, bool latchedWheel)
 {
     const float tickDivisor = (float)WheelEvent::tickMultiplier;
+    const float scaleFactor = m_frame->pageZoomFactor() * m_frame->frameScaleFactor();
+    float scaledDeltaX = gestureEvent.deltaX() / scaleFactor;
+    float scaledDeltaY = gestureEvent.deltaY() / scaleFactor;
     IntPoint point(gestureEvent.position().x(), gestureEvent.position().y());
     IntPoint globalPoint(gestureEvent.globalPosition().x(), gestureEvent.globalPosition().y());
     PlatformWheelEvent syntheticWheelEvent(point, globalPoint,
-        gestureEvent.deltaX(), gestureEvent.deltaY(), gestureEvent.deltaX() / tickDivisor, gestureEvent.deltaY() / tickDivisor,
+        scaledDeltaX, scaledDeltaY, scaledDeltaX / tickDivisor, scaledDeltaY / tickDivisor,
         granularity,
         gestureEvent.shiftKey(), gestureEvent.ctrlKey(), gestureEvent.altKey(), gestureEvent.metaKey());
     syntheticWheelEvent.setUseLatchedEventNode(latchedWheel);

@@ -92,10 +92,6 @@ struct WebProcessCreationParameters;
 class NetworkProcessConnection;
 #endif
 
-#if USE(SECURITY_FRAMEWORK)
-class SecItemResponseData;
-#endif
-
 #if ENABLE(NETWORK_PROCESS)
 class WebResourceLoadScheduler;
 #endif
@@ -223,9 +219,6 @@ private:
     void setShouldUseFontSmoothing(bool);
     void userPreferredLanguagesChanged(const Vector<String>&) const;
     void fullKeyboardAccessModeChanged(bool fullKeyboardAccessEnabled);
-#if PLATFORM(WIN)
-    void setShouldPaintNativeControls(bool);
-#endif
 
     void setVisitedLinkTable(const SharedMemory::Handle&);
     void visitedLinkStateChanged(const Vector<WebCore::LinkHash>& linkHashes);
@@ -270,10 +263,6 @@ private:
 
     void postInjectedBundleMessage(const CoreIPC::DataReference& messageData);
 
-#if USE(SECURITY_FRAMEWORK)
-    void secItemResponse(CoreIPC::Connection*, uint64_t requestID, const SecItemResponseData&);
-#endif
-
     // ChildProcess
     virtual void initializeProcess(const ChildProcessInitializationParameters&) OVERRIDE;
     virtual void initializeProcessName(const ChildProcessInitializationParameters&) OVERRIDE;
@@ -291,9 +280,6 @@ private:
     virtual void didReceiveSyncMessage(CoreIPC::Connection*, CoreIPC::MessageID, CoreIPC::MessageDecoder&, OwnPtr<CoreIPC::MessageEncoder>&);
     virtual void didClose(CoreIPC::Connection*);
     virtual void didReceiveInvalidMessage(CoreIPC::Connection*, CoreIPC::StringReference messageReceiverName, CoreIPC::StringReference messageName) OVERRIDE;
-#if PLATFORM(WIN)
-    virtual Vector<HWND> windowsToReceiveSentMessagesWhileWaitingForSyncReply();
-#endif
 
     // CoreIPC::Connection::QueueClient
     virtual void didReceiveMessageOnConnectionWorkQueue(CoreIPC::Connection*, CoreIPC::MessageID, CoreIPC::MessageDecoder&, bool& didHandleMessage) OVERRIDE;

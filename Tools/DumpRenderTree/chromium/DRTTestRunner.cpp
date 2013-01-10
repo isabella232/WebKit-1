@@ -117,21 +117,11 @@ DRTTestRunner::DRTTestRunner(TestShell* shell)
     bindMethod("disableAutoResizeMode", &DRTTestRunner::disableAutoResizeMode);
     bindMethod("display", &DRTTestRunner::display);
     bindMethod("displayInvalidatedRegion", &DRTTestRunner::displayInvalidatedRegion);
-    bindMethod("dumpAsText", &DRTTestRunner::dumpAsText);
     bindMethod("dumpBackForwardList", &DRTTestRunner::dumpBackForwardList);
-    bindMethod("dumpChildFramesAsText", &DRTTestRunner::dumpChildFramesAsText);
-    bindMethod("dumpChildFrameScrollPositions", &DRTTestRunner::dumpChildFrameScrollPositions);
-    bindMethod("dumpFrameLoadCallbacks", &DRTTestRunner::dumpFrameLoadCallbacks);
     bindMethod("dumpProgressFinishedCallback", &DRTTestRunner::dumpProgressFinishedCallback);
-    bindMethod("dumpUserGestureInFrameLoadCallbacks", &DRTTestRunner::dumpUserGestureInFrameLoadCallbacks);
-    bindMethod("dumpResourceLoadCallbacks", &DRTTestRunner::dumpResourceLoadCallbacks);
-    bindMethod("dumpResourceRequestCallbacks", &DRTTestRunner::dumpResourceRequestCallbacks);
-    bindMethod("dumpResourceResponseMIMETypes", &DRTTestRunner::dumpResourceResponseMIMETypes);
     bindMethod("dumpSelectionRect", &DRTTestRunner::dumpSelectionRect);
     bindMethod("dumpStatusCallbacks", &DRTTestRunner::dumpWindowStatusChanges);
-    bindMethod("dumpTitleChanges", &DRTTestRunner::dumpTitleChanges);
     bindMethod("dumpPermissionClientCallbacks", &DRTTestRunner::dumpPermissionClientCallbacks);
-    bindMethod("dumpCreateView", &DRTTestRunner::dumpCreateView);
     bindMethod("enableAutoResizeMode", &DRTTestRunner::enableAutoResizeMode);
     bindMethod("evaluateInWebInspector", &DRTTestRunner::evaluateInWebInspector);
 #if ENABLE(NOTIFICATIONS)
@@ -151,12 +141,10 @@ DRTTestRunner::DRTTestRunner(TestShell* shell)
     bindMethod("setAllowDisplayOfInsecureContent", &DRTTestRunner::setAllowDisplayOfInsecureContent);
     bindMethod("setAllowRunningOfInsecureContent", &DRTTestRunner::setAllowRunningOfInsecureContent);
     bindMethod("setAlwaysAcceptCookies", &DRTTestRunner::setAlwaysAcceptCookies);
-    bindMethod("setCanOpenWindows", &DRTTestRunner::setCanOpenWindows);
     bindMethod("setCloseRemainingWindowsWhenComplete", &DRTTestRunner::setCloseRemainingWindowsWhenComplete);
     bindMethod("setCustomPolicyDelegate", &DRTTestRunner::setCustomPolicyDelegate);
     bindMethod("setDatabaseQuota", &DRTTestRunner::setDatabaseQuota);
     bindMethod("setDeferMainResourceDataLoad", &DRTTestRunner::setDeferMainResourceDataLoad);
-    bindMethod("setAudioData", &DRTTestRunner::setAudioData);
     bindMethod("setGeolocationPermission", &DRTTestRunner::setGeolocationPermission);
     bindMethod("setMockDeviceOrientation", &DRTTestRunner::setMockDeviceOrientation);
     bindMethod("setMockGeolocationPositionUnavailableError", &DRTTestRunner::setMockGeolocationPositionUnavailableError);
@@ -170,7 +158,6 @@ DRTTestRunner::DRTTestRunner(TestShell* shell)
     bindMethod("setSelectTrailingWhitespaceEnabled", &DRTTestRunner::setSelectTrailingWhitespaceEnabled);
     bindMethod("setBackingScaleFactor", &DRTTestRunner::setBackingScaleFactor);
     bindMethod("setSmartInsertDeleteEnabled", &DRTTestRunner::setSmartInsertDeleteEnabled);
-    bindMethod("setStopProvisionalFrameLoads", &DRTTestRunner::setStopProvisionalFrameLoads);
     bindMethod("setWillSendRequestClearHeader", &DRTTestRunner::setWillSendRequestClearHeader);
     bindMethod("setWillSendRequestReturnsNull", &DRTTestRunner::setWillSendRequestReturnsNull);
     bindMethod("setWillSendRequestReturnsNullOnRedirect", &DRTTestRunner::setWillSendRequestReturnsNullOnRedirect);
@@ -249,27 +236,9 @@ void DRTTestRunner::WorkQueue::addWork(WorkItem* work)
     m_queue.append(work);
 }
 
-void DRTTestRunner::dumpAsText(const CppArgumentList& arguments, CppVariant* result)
-{
-    m_dumpAsText = true;
-    m_generatePixelResults = false;
-
-    // Optional paramater, describing whether it's allowed to dump pixel results in dumpAsText mode.
-    if (arguments.size() > 0 && arguments[0].isBool())
-        m_generatePixelResults = arguments[0].value.boolValue;
-
-    result->setNull();
-}
-
 void DRTTestRunner::dumpBackForwardList(const CppArgumentList&, CppVariant* result)
 {
     m_dumpBackForwardList = true;
-    result->setNull();
-}
-
-void DRTTestRunner::dumpFrameLoadCallbacks(const CppArgumentList&, CppVariant* result)
-{
-    m_dumpFrameLoadCallbacks = true;
     result->setNull();
 }
 
@@ -279,63 +248,15 @@ void DRTTestRunner::dumpProgressFinishedCallback(const CppArgumentList&, CppVari
     result->setNull();
 }
 
-void DRTTestRunner::dumpUserGestureInFrameLoadCallbacks(const CppArgumentList&, CppVariant* result)
-{
-    m_dumpUserGestureInFrameLoadCallbacks = true;
-    result->setNull();
-}
-
-void DRTTestRunner::dumpResourceLoadCallbacks(const CppArgumentList&, CppVariant* result)
-{
-    m_dumpResourceLoadCallbacks = true;
-    result->setNull();
-}
-
-void DRTTestRunner::dumpResourceRequestCallbacks(const CppArgumentList&, CppVariant* result)
-{
-    m_dumpResourceRequestCallbacks = true;
-    result->setNull();
-}
-
-void DRTTestRunner::dumpResourceResponseMIMETypes(const CppArgumentList&, CppVariant* result)
-{
-    m_dumpResourceResponseMIMETypes = true;
-    result->setNull();
-}
-
-void DRTTestRunner::dumpChildFrameScrollPositions(const CppArgumentList&, CppVariant* result)
-{
-    m_dumpChildFrameScrollPositions = true;
-    result->setNull();
-}
-
-void DRTTestRunner::dumpChildFramesAsText(const CppArgumentList&, CppVariant* result)
-{
-    m_dumpChildFramesAsText = true;
-    result->setNull();
-}
-
 void DRTTestRunner::dumpWindowStatusChanges(const CppArgumentList&, CppVariant* result)
 {
     m_dumpWindowStatusChanges = true;
     result->setNull();
 }
 
-void DRTTestRunner::dumpTitleChanges(const CppArgumentList&, CppVariant* result)
-{
-    m_dumpTitleChanges = true;
-    result->setNull();
-}
-
 void DRTTestRunner::dumpPermissionClientCallbacks(const CppArgumentList&, CppVariant* result)
 {
     m_dumpPermissionClientCallbacks = true;
-    result->setNull();
-}
-
-void DRTTestRunner::dumpCreateView(const CppArgumentList&, CppVariant* result)
-{
-    m_dumpCreateView = true;
     result->setNull();
 }
 
@@ -523,28 +444,14 @@ void DRTTestRunner::reset()
     TestRunner::reset();
     if (m_shell)
         m_shell->webViewHost()->setDeviceScaleFactor(1);
-    m_dumpAsText = false;
-    m_dumpAsAudio = false;
-    m_dumpCreateView = false;
-    m_dumpFrameLoadCallbacks = false;
     m_dumpProgressFinishedCallback = false;
-    m_dumpUserGestureInFrameLoadCallbacks = false;
-    m_dumpResourceLoadCallbacks = false;
-    m_dumpResourceRequestCallbacks = false;
-    m_dumpResourceResponseMIMETypes = false;
     m_dumpBackForwardList = false;
-    m_dumpChildFrameScrollPositions = false;
-    m_dumpChildFramesAsText = false;
     m_dumpWindowStatusChanges = false;
     m_dumpSelectionRect = false;
-    m_dumpTitleChanges = false;
     m_dumpPermissionClientCallbacks = false;
-    m_generatePixelResults = true;
     m_waitUntilDone = false;
-    m_canOpenWindows = false;
     m_testRepaint = false;
     m_sweepHorizontally = false;
-    m_stopProvisionalFrameLoads = false;
     m_deferMainResourceDataLoad = true;
     m_webHistoryItemCount.set(0);
     m_titleTextDirection.set("ltr");
@@ -583,12 +490,6 @@ void DRTTestRunner::policyDelegateDone()
     ASSERT(m_waitUntilDone);
     m_shell->testFinished();
     m_waitUntilDone = false;
-}
-
-void DRTTestRunner::setCanOpenWindows(const CppArgumentList&, CppVariant* result)
-{
-    m_canOpenWindows = true;
-    result->setNull();
 }
 
 void DRTTestRunner::windowCount(const CppArgumentList&, CppVariant* result)
@@ -736,12 +637,6 @@ void DRTTestRunner::pathToLocalResource(const CppArgumentList& arguments, CppVar
         lowerUrl = lowerUrl.substr(0, 8) + lowerUrl.substr(9);
     }
     result->set(webkit_support::RewriteLayoutTestsURL(url).spec());
-}
-
-void DRTTestRunner::setStopProvisionalFrameLoads(const CppArgumentList&, CppVariant* result)
-{
-    result->setNull();
-    m_stopProvisionalFrameLoads = true;
 }
 
 void DRTTestRunner::setSmartInsertDeleteEnabled(const CppArgumentList& arguments, CppVariant* result)
@@ -1068,23 +963,6 @@ void DRTTestRunner::setBackingScaleFactor(const CppArgumentList& arguments, CppV
     callbackArguments[0].set(arguments[1]);
     result->setNull();
     postTask(new InvokeCallbackTask(this, callbackArguments.release(), 1));
-}
-
-void DRTTestRunner::setAudioData(const CppArgumentList& arguments, CppVariant* result)
-{
-    result->setNull();
-
-    if (arguments.size() < 1 || !arguments[0].isObject())
-        return;
-
-    // Check that passed-in object is, in fact, an ArrayBufferView.
-    NPObject* npobject = NPVARIANT_TO_OBJECT(arguments[0]);
-    if (!npobject)
-        return;
-    if (!WebBindings::getArrayBufferView(npobject, &m_audioData))
-        return;
-
-    setShouldDumpAsAudio(true);
 }
 
 #if ENABLE(POINTER_LOCK)

@@ -218,6 +218,8 @@ struct JITStackFrame {
     void* preservedS0;
     void* preservedS1;
     void* preservedS2;
+    void* preservedS3;
+    void* preservedS4;
     void* preservedReturnAddress;
 
     ReturnAddressPtr thunkReturnAddress;
@@ -289,6 +291,8 @@ inline bool returnAddressIsInCtiTrampoline(ReturnAddressPtr returnAddress)
         && returnAddress.value() < bitwise_cast<void*>(&ctiTrampolineEnd);
 }
 #endif
+
+void performPlatformSpecificJITAssertions(JSGlobalData*);
 
 extern "C" {
 EncodedJSValue JIT_STUB cti_op_add(STUB_ARGS_DECLARATION) WTF_INTERNAL;

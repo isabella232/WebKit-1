@@ -78,7 +78,8 @@ public:
 }
 
 TestRunner::TestRunner()
-    : m_delegate(0)
+    : m_testIsRunning(false)
+    , m_delegate(0)
     , m_webView(0)
     , m_intentClient(adoptPtr(new EmptyWebDeliveredIntentClient))
 {
@@ -133,6 +134,19 @@ TestRunner::TestRunner()
 
     // The following modify the state of the TestRunner.
     bindMethod("dumpEditingCallbacks", &TestRunner::dumpEditingCallbacks);
+    bindMethod("dumpAsText", &TestRunner::dumpAsText);
+    bindMethod("dumpChildFramesAsText", &TestRunner::dumpChildFramesAsText);
+    bindMethod("dumpChildFrameScrollPositions", &TestRunner::dumpChildFrameScrollPositions);
+    bindMethod("setAudioData", &TestRunner::setAudioData);
+    bindMethod("dumpFrameLoadCallbacks", &TestRunner::dumpFrameLoadCallbacks);
+    bindMethod("dumpUserGestureInFrameLoadCallbacks", &TestRunner::dumpUserGestureInFrameLoadCallbacks);
+    bindMethod("setStopProvisionalFrameLoads", &TestRunner::setStopProvisionalFrameLoads);
+    bindMethod("dumpTitleChanges", &TestRunner::dumpTitleChanges);
+    bindMethod("dumpCreateView", &TestRunner::dumpCreateView);
+    bindMethod("setCanOpenWindows", &TestRunner::setCanOpenWindows);
+    bindMethod("dumpResourceLoadCallbacks", &TestRunner::dumpResourceLoadCallbacks);
+    bindMethod("dumpResourceRequestCallbacks", &TestRunner::dumpResourceRequestCallbacks);
+    bindMethod("dumpResourceResponseMIMETypes", &TestRunner::dumpResourceResponseMIMETypes);
 
     // The following methods interact with the WebTestProxy.
     bindMethod("sendWebIntentResponse", &TestRunner::sendWebIntentResponse);
@@ -198,6 +212,20 @@ void TestRunner::reset()
 #endif
 
     m_dumpEditingCallbacks = false;
+    m_dumpAsText = false;
+    m_generatePixelResults = true;
+    m_dumpChildFrameScrollPositions = false;
+    m_dumpChildFramesAsText = false;
+    m_dumpAsAudio = false;
+    m_dumpFrameLoadCallbacks = false;
+    m_dumpUserGestureInFrameLoadCallbacks = false;
+    m_stopProvisionalFrameLoads = false;
+    m_dumpTitleChanges = false;
+    m_dumpCreateView = false;
+    m_canOpenWindows = false;
+    m_dumpResourceLoadCallbacks = false;
+    m_dumpResourceRequestCallbacks = false;
+    m_dumpResourceResponseMIMETypes = false;
 
     m_globalFlag.set(false);
     m_platformName.set("chromium");
@@ -205,9 +233,104 @@ void TestRunner::reset()
     m_userStyleSheetLocation = WebURL();
 }
 
+void TestRunner::setTestIsRunning(bool running)
+{
+    m_testIsRunning = running;
+}
+
 bool TestRunner::shouldDumpEditingCallbacks() const
 {
     return m_dumpEditingCallbacks;
+}
+
+bool TestRunner::shouldDumpAsText() const
+{
+    return m_dumpAsText;
+}
+
+void TestRunner::setShouldDumpAsText(bool value)
+{
+    m_dumpAsText = value;
+}
+
+bool TestRunner::shouldGeneratePixelResults() const
+{
+    return m_generatePixelResults;
+}
+
+void TestRunner::setShouldGeneratePixelResults(bool value)
+{
+    m_generatePixelResults = value;
+}
+
+bool TestRunner::shouldDumpChildFrameScrollPositions() const
+{
+    return m_dumpChildFrameScrollPositions;
+}
+
+bool TestRunner::shouldDumpChildFramesAsText() const
+{
+    return m_dumpChildFramesAsText;
+}
+
+bool TestRunner::shouldDumpAsAudio() const
+{
+    return m_dumpAsAudio;
+}
+
+const WebArrayBufferView* TestRunner::audioData() const
+{
+    return &m_audioData;
+}
+
+bool TestRunner::shouldDumpFrameLoadCallbacks() const
+{
+    return m_testIsRunning && m_dumpFrameLoadCallbacks;
+}
+
+void TestRunner::setShouldDumpFrameLoadCallbacks(bool value)
+{
+    m_dumpFrameLoadCallbacks = value;
+}
+
+bool TestRunner::shouldDumpUserGestureInFrameLoadCallbacks() const
+{
+    return m_testIsRunning && m_dumpUserGestureInFrameLoadCallbacks;
+}
+
+bool TestRunner::stopProvisionalFrameLoads() const
+{
+    return m_stopProvisionalFrameLoads;
+}
+
+bool TestRunner::shouldDumpTitleChanges() const
+{
+    return m_dumpTitleChanges;
+}
+
+bool TestRunner::shouldDumpCreateView() const
+{
+    return m_dumpCreateView;
+}
+
+bool TestRunner::canOpenWindows() const
+{
+    return m_canOpenWindows;
+}
+
+bool TestRunner::shouldDumpResourceLoadCallbacks() const
+{
+    return m_testIsRunning && m_dumpResourceLoadCallbacks;
+}
+
+bool TestRunner::shouldDumpResourceRequestCallbacks() const
+{
+    return m_testIsRunning && m_dumpResourceRequestCallbacks;
+}
+
+bool TestRunner::shouldDumpResourceResponseMIMETypes() const
+{
+    return m_testIsRunning && m_dumpResourceResponseMIMETypes;
 }
 
 void TestRunner::setTabKeyCyclesThroughElements(const CppArgumentList& arguments, CppVariant* result)
@@ -907,6 +1030,101 @@ void TestRunner::deliverWebIntent(const CppArgumentList& arguments, CppVariant* 
 void TestRunner::dumpEditingCallbacks(const CppArgumentList&, CppVariant* result)
 {
     m_dumpEditingCallbacks = true;
+    result->setNull();
+}
+
+void TestRunner::dumpAsText(const CppArgumentList& arguments, CppVariant* result)
+{
+    m_dumpAsText = true;
+    m_generatePixelResults = false;
+
+    // Optional paramater, describing whether it's allowed to dump pixel results in dumpAsText mode.
+    if (arguments.size() > 0 && arguments[0].isBool())
+        m_generatePixelResults = arguments[0].value.boolValue;
+
+    result->setNull();
+}
+
+void TestRunner::dumpChildFrameScrollPositions(const CppArgumentList&, CppVariant* result)
+{
+    m_dumpChildFrameScrollPositions = true;
+    result->setNull();
+}
+
+void TestRunner::dumpChildFramesAsText(const CppArgumentList&, CppVariant* result)
+{
+    m_dumpChildFramesAsText = true;
+    result->setNull();
+}
+
+void TestRunner::setAudioData(const CppArgumentList& arguments, CppVariant* result)
+{
+    result->setNull();
+
+    if (arguments.size() < 1 || !arguments[0].isObject())
+        return;
+
+    // Check that passed-in object is, in fact, an ArrayBufferView.
+    NPObject* npobject = NPVARIANT_TO_OBJECT(arguments[0]);
+    if (!npobject)
+        return;
+    if (!WebBindings::getArrayBufferView(npobject, &m_audioData))
+        return;
+
+    m_dumpAsAudio = true;
+}
+
+void TestRunner::dumpFrameLoadCallbacks(const CppArgumentList&, CppVariant* result)
+{
+    m_dumpFrameLoadCallbacks = true;
+    result->setNull();
+}
+
+void TestRunner::dumpUserGestureInFrameLoadCallbacks(const CppArgumentList&, CppVariant* result)
+{
+    m_dumpUserGestureInFrameLoadCallbacks = true;
+    result->setNull();
+}
+
+void TestRunner::setStopProvisionalFrameLoads(const CppArgumentList&, CppVariant* result)
+{
+    result->setNull();
+    m_stopProvisionalFrameLoads = true;
+}
+
+void TestRunner::dumpTitleChanges(const CppArgumentList&, CppVariant* result)
+{
+    m_dumpTitleChanges = true;
+    result->setNull();
+}
+
+void TestRunner::dumpCreateView(const CppArgumentList&, CppVariant* result)
+{
+    m_dumpCreateView = true;
+    result->setNull();
+}
+
+void TestRunner::setCanOpenWindows(const CppArgumentList&, CppVariant* result)
+{
+    m_canOpenWindows = true;
+    result->setNull();
+}
+
+void TestRunner::dumpResourceLoadCallbacks(const CppArgumentList&, CppVariant* result)
+{
+    m_dumpResourceLoadCallbacks = true;
+    result->setNull();
+}
+
+void TestRunner::dumpResourceRequestCallbacks(const CppArgumentList&, CppVariant* result)
+{
+    m_dumpResourceRequestCallbacks = true;
+    result->setNull();
+}
+
+void TestRunner::dumpResourceResponseMIMETypes(const CppArgumentList&, CppVariant* result)
+{
+    m_dumpResourceResponseMIMETypes = true;
     result->setNull();
 }
 

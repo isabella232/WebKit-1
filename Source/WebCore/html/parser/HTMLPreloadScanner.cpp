@@ -34,6 +34,7 @@
 #include "HTMLTokenizer.h"
 #include "HTMLNames.h"
 #include "HTMLParserIdioms.h"
+#include "HTMLParserOptions.h"
 #include "InputTypeNames.h"
 #include "LinkRelAttribute.h"
 #include "MediaList.h"
@@ -161,10 +162,10 @@ private:
     bool m_inputIsImage;
 };
 
-HTMLPreloadScanner::HTMLPreloadScanner(Document* document)
+HTMLPreloadScanner::HTMLPreloadScanner(Document* document, const HTMLParserOptions& options)
     : m_document(document)
     , m_cssScanner(document)
-    , m_tokenizer(HTMLTokenizer::create(HTMLDocumentParser::usePreHTML5ParserQuirks(document)))
+    , m_tokenizer(HTMLTokenizer::create(options))
     , m_inStyle(false)
 {
 }
@@ -202,7 +203,7 @@ void HTMLPreloadScanner::processToken()
         return;
 
     PreloadTask task(m_token);
-    m_tokenizer->updateStateFor(task.tagName(), m_document->frame());
+    m_tokenizer->updateStateFor(task.tagName());
 
     if (task.tagName() == styleTag)
         m_inStyle = true;

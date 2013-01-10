@@ -1,3 +1,164 @@
+2013-01-10  Yongxin Dai  <yodai@rim.com>
+
+        [BlackBerry] Handle the case that start/end position is out of unclipped selection region
+        https://bugs.webkit.org/show_bug.cgi?id=106486
+
+        Reviewed by Rob Buis.
+
+        PR #270624
+        Unclipped selection region should cover start/end position of the selection.
+        Since we exclude hidden text when calculating unclipped selection region, the
+        start/end position can be out of unclipped selection region if it is for hidden
+        text. If that is the case, start/end handle will be invisible. To avoid invisible
+        handle, we take unclipped selection region as reference rectangle in the case.
+
+        Internally reviewed by Genevieve Mak, Mike Fenton
+
+        * WebKitSupport/SelectionHandler.cpp:
+        (BlackBerry::WebKit::referencePoint):
+
+2013-01-09  Genevieve Mak  <gmak@rim.com>
+
+        [BlackBerry] Useless if statement check
+        https://bugs.webkit.org/show_bug.cgi?id=106113
+
+        Reviewed by Yong Li.
+
+        Remove stray ! in if statement which was mistakenly left in during
+        refactoring. Since Injected events are checked before they are sent to
+        webkit, it didn't have an effect on behaviour.
+
+        * Api/WebPage.cpp:
+        (BlackBerry::WebKit::WebPage::touchEvent):
+
+2013-01-08  Otto Derek Cheung  <otcheung@rim.com>
+
+        [BlackBerry] Removing the totalusage variable in ChromeClientBB::exceededDatabaseQuota
+        https://bugs.webkit.org/show_bug.cgi?id=106370
+
+        Reviewed by Yong Li.
+
+        Removing totalUsage in ChromeClientBlackBerry as we no longer use that variable.
+
+        * WebCoreSupport/ChromeClientBlackBerry.cpp:
+        (WebCore::ChromeClientBlackBerry::exceededDatabaseQuota):
+
+2013-01-08  Jacky Jiang  <zhajiang@rim.com>
+
+        [Blackberry][FullScreen] Create a helper method to adjust the fullscreen renderer dimensions
+        https://bugs.webkit.org/show_bug.cgi?id=91748
+
+        Reviewed by Antonio Gomes.
+
+        PR: 195524
+        The was originally from Antonio Gomes on PR195524. Bug 105488 has
+        partially upstreamed that patch. This patch upstreams the rest of it.
+
+        * Api/WebPage.cpp:
+        (BlackBerry::WebKit::WebPagePrivate::updateViewportSize):
+        (BlackBerry::WebKit::WebPagePrivate::notifyTransformedScrollChanged):
+        * Api/WebPage_p.h:
+        (WebPagePrivate):
+        * WebCoreSupport/ChromeClientBlackBerry.cpp:
+        (WebCore::ChromeClientBlackBerry::fullScreenRendererChanged):
+
+2013-01-08  Mark Lam  <mark.lam@apple.com>
+
+        Removed the need for the ProposedDatabase mechanism.
+        https://bugs.webkit.org/show_bug.cgi?id=106292.
+
+        Reviewed by Sam Weinig.
+
+        * WebCoreSupport/ChromeClientBlackBerry.cpp:
+        (WebCore::ChromeClientBlackBerry::exceededDatabaseQuota):
+        * WebCoreSupport/ChromeClientBlackBerry.h:
+        (ChromeClientBlackBerry):
+
+2013-01-08  Sean Wang  <Xuewen.Wang@torchmobile.com.cn>
+
+        [BlackBerry] Can't select text out of current focused input
+        https://bugs.webkit.org/show_bug.cgi?id=106322
+
+        Reviewed by Rob Buis.
+
+        PR270755
+        Internally reviewed by Mike Fenton
+
+        When selection changed, the selection handler clips new selection with
+        current focused node's boundary. So we clear focus before selectObject.
+        This patch clear focus when selectObject is at a point but not at a node.
+
+        * WebKitSupport/SelectionHandler.cpp:
+        (BlackBerry::WebKit::SelectionHandler::selectObject):
+
+2013-01-08  Steve Block  <steveblock@chromium.org>
+
+        Rename 'IntSize toSize(const IntPoint&)' to 'toIntSize'
+        https://bugs.webkit.org/show_bug.cgi?id=106307
+
+        This matches other method names which distinguish between sizes and
+        points. See https://bugs.webkit.org/show_bug.cgi?id=105992#c4.
+
+        Reviewed by Kentaro Hara.
+
+        * Api/InRegionScroller.cpp:
+        (BlackBerry::WebKit::InRegionScrollerPrivate::setLayerScrollPosition):
+
+2013-01-07  Genevieve Mak  <gmak@rim.com>
+
+        [BlackBerry] Touch Events are falling through fullscreen video
+        https://bugs.webkit.org/show_bug.cgi?id=106112
+
+        Reviewed by Rob Buis.
+
+        Reviewed Internally by Jakob Petsovits.
+        PR #274326
+        Do not do viewport centering calculations if in fullscreen video.
+        The offset should be zero.
+
+        * Api/WebPage.cpp:
+        (BlackBerry::WebKit::WebPagePrivate::setViewportSize):
+
+2013-01-07  Jacky Jiang  <zhajiang@rim.com>
+
+        [BlackBerry] Roll out r136173 as there are alternative approaches from the client sides now
+        https://bugs.webkit.org/show_bug.cgi?id=106236
+
+        Unreviewed, rolling out r136173.
+        This becomes unnecessary now as there are alternative approaches to
+        solve the issue from the client sides.
+
+        * WebCoreSupport/ChromeClientBlackBerry.cpp:
+        (WebCore::ChromeClientBlackBerry::createWindow):
+
+2013-01-07  Jakob Petsovits  <jpetsovits@rim.com>
+
+        [BlackBerry] Never avoid blitting when one-shot drawing sync is involved.
+        https://bugs.webkit.org/show_bug.cgi?id=106225
+        RIM PR 274948
+
+        Reviewed by George Staikos.
+        Based on a patch by Chris Guan.
+
+        didRenderContent() has a mechanism to avoid double blits;
+        when scrolling or zooming is enabled then we don't issue
+        blitContents() as the client would (continually) do that
+        already.
+
+        However, since r138024, didRenderContents() also deals
+        with one-shot drawing synchronization and commits.
+        When these are required, we can't just skip out or the
+        backingstore and overlaying composited layers are likely
+        to get out of sync. The condition also doesn't make much
+        sense for direct rendering as no blit calls are issued
+        at all when it is enabled.
+
+        Fix the issue by limiting the impact of the scroll/zoom
+        early return to only regular blit operations.
+
+        * Api/BackingStore.cpp:
+        (BlackBerry::WebKit::BackingStorePrivate::didRenderContent):
+
 2013-01-05  Andy Chen  <andchen@rim.com>
 
         [BlackBerry] SelectionHandler::selectAtPoint should use last fat finger result when it is a link
@@ -2003,26 +2164,6 @@
 
         * Api/BlackBerryGlobal.cpp:
         (BlackBerry::WebKit::globalInitialize):
-
-2012-11-29  Jacky Jiang  <zhajiang@rim.com>
-
-        [BlackBerry] window.open can load url twice which can cause security and timing issues
-        https://bugs.webkit.org/show_bug.cgi?id=103670
-
-        Reviewed by Yong Li.
-
-        PR: 252234
-        When we call window.open() in JS, DOMWindow will create a window and
-        change the url to load the resources. However, during the window
-        creation, we dispatch an OpenWindow event with the url to browser side
-        and browser side loads the url thereafter as well.
-        DOMWindow::createWindow() is only required to create the window not to
-        load url as far as I can tell. This is unneccessary and can cause
-        unexpected issues. So just pass an empty url instead to avoid
-        the double-load issue.
-
-        * WebCoreSupport/ChromeClientBlackBerry.cpp:
-        (WebCore::ChromeClientBlackBerry::createWindow):
 
 2012-11-29  Otto Derek Cheung  <otcheung@rim.com>
 

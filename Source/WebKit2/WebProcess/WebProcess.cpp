@@ -120,6 +120,10 @@
 #include "PluginProcessConnectionManager.h"
 #endif
 
+#if USE(SECURITY_FRAMEWORK)
+#include "SecItemShim.h"
+#endif
+
 using namespace JSC;
 using namespace WebCore;
 
@@ -204,9 +208,15 @@ void WebProcess::initializeProcess(const ChildProcessInitializationParameters& p
 
 void WebProcess::initializeConnection(CoreIPC::Connection* connection)
 {
+    ChildProcess::initializeConnection(connection);
+
     connection->setShouldExitOnSyncMessageSendFailure(true);
     connection->addQueueClient(&m_eventDispatcher);
     connection->addQueueClient(this);
+
+#if USE(SECURITY_FRAMEWORK)
+    connection->addQueueClient(&SecItemShim::shared());
+#endif
 
     m_webConnection = WebConnectionToUIProcess::create(this);
 }
@@ -305,7 +315,7 @@ void WebProcess::initializeWebProcess(const WebProcessCreationParameters& parame
     if (parameters.shouldUseFontSmoothing)
         setShouldUseFontSmoothing(true);
 
-#if (PLATFORM(MAC) || USE(CFNETWORK)) && !PLATFORM(WIN)
+#if PLATFORM(MAC) || USE(CFNETWORK)
     WebFrameNetworkingContext::setPrivateBrowsingStorageSessionIdentifierBase(parameters.uiProcessBundleIdentifier);
 #endif
 
@@ -413,14 +423,14 @@ void WebProcess::fullKeyboardAccessModeChanged(bool fullKeyboardAccessEnabled)
 
 void WebProcess::ensurePrivateBrowsingSession()
 {
-#if (PLATFORM(MAC) || USE(CFNETWORK)) && !PLATFORM(WIN)
+#if PLATFORM(MAC) || USE(CFNETWORK)
     WebFrameNetworkingContext::ensurePrivateBrowsingSession();
 #endif
 }
 
 void WebProcess::destroyPrivateBrowsingSession()
 {
-#if (PLATFORM(MAC) || USE(CFNETWORK)) && !PLATFORM(WIN)
+#if PLATFORM(MAC) || USE(CFNETWORK)
     WebFrameNetworkingContext::destroyPrivateBrowsingSession();
 #endif
 }
@@ -719,8 +729,6 @@ void WebProcess::clearApplicationCache()
 #if ENABLE(NETSCAPE_PLUGIN_API) && !ENABLE(PLUGIN_PROCESS)
 void WebProcess::getSitesWithPluginData(const Vector<String>& pluginPaths, uint64_t callbackID)
 {
-    LocalTerminationDisabler terminationDisabler(*this);
-
     HashSet<String> sitesSet;
 
 #if ENABLE(NETSCAPE_PLUGIN_API)
@@ -745,8 +753,6 @@ void WebProcess::getSitesWithPluginData(const Vector<String>& pluginPaths, uint6
 
 void WebProcess::clearPluginSiteData(const Vector<String>& pluginPaths, const Vector<String>& sites, uint64_t flags, uint64_t maxAgeInSeconds, uint64_t callbackID)
 {
-    LocalTerminationDisabler terminationDisabler(*this);
-
 #if ENABLE(NETSCAPE_PLUGIN_API)
     for (size_t i = 0; i < pluginPaths.size(); ++i) {
         RefPtr<NetscapePluginModule> netscapePluginModule = NetscapePluginModule::getOrCreate(pluginPaths[i]);

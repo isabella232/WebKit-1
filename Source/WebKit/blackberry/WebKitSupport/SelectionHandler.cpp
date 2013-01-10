@@ -662,6 +662,10 @@ void SelectionHandler::selectObject(const WebCore::IntPoint& location, TextGranu
         Platform::IntPoint(location).toString().c_str());
 
     WebCore::IntPoint relativePoint = DOMSupport::convertPointToFrame(m_webPage->mainFrame(), focusedFrame, location);
+    // Clear input focus if we're not selecting in old input field.
+    if (!m_webPage->m_inputHandler->boundingBoxForInputField().contains(relativePoint))
+        m_webPage->clearFocusNode();
+
     VisiblePosition pointLocation(focusedFrame->visiblePositionForPoint(relativePoint));
     VisibleSelection selection = VisibleSelection(pointLocation, pointLocation);
 
@@ -851,10 +855,9 @@ static WebCore::IntPoint referencePoint(const VisiblePosition& position, const W
     // entire region (which is already in frame coordinates so doesn't need
     // adjusting).
     WebCore::IntRect startCaretBounds(position.absoluteCaretBounds());
-    if (startCaretBounds.isEmpty())
+    startCaretBounds.move(framePosition.x(), framePosition.y());
+    if (startCaretBounds.isEmpty() || !boundingRect.contains(startCaretBounds))
         startCaretBounds = boundingRect;
-    else
-        startCaretBounds.move(framePosition.x(), framePosition.y());
 
     return caretComparisonPointForRect(startCaretBounds, isStartCaret, isRTL);
 }

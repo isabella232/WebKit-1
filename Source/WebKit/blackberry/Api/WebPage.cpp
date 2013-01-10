@@ -1479,16 +1479,7 @@ void WebPagePrivate::updateViewportSize(bool setFixedReportedSize, bool sendResi
         m_mainFrame->view()->adjustViewSize();
 
 #if ENABLE(FULLSCREEN_API)
-        // If we are in fullscreen video mode, and we change the FrameView::viewportRect,
-        // we need to adjust the media container to the new size.
-        if (m_fullscreenVideoNode) {
-            Document* document = m_fullscreenVideoNode->document();
-            ASSERT(document);
-            ASSERT(document->fullScreenRenderer());
-
-            int width = m_mainFrame->view()->visibleContentRect().size().width();
-            document->fullScreenRenderer()->style()->setWidth(Length(width, Fixed));
-        }
+        adjustFullScreenElementDimensionsIfNeeded();
 #endif
     }
 
@@ -1990,6 +1981,10 @@ void WebPagePrivate::notifyTransformedScrollChanged()
     const IntPoint pos = transformedScrollPosition();
     m_backingStore->d->scrollChanged(pos);
     m_client->scrollChanged();
+
+#if ENABLE(FULLSCREEN_API)
+    adjustFullScreenElementDimensionsIfNeeded();
+#endif
 }
 
 bool WebPagePrivate::setViewMode(ViewMode mode)
@@ -3662,7 +3657,7 @@ void WebPagePrivate::setViewportSize(const IntSize& transformedActualVisibleSize
     IntSize viewportSizeAfter = actualVisibleSize();
 
     IntSize offset;
-    if (hasPendingOrientation) {
+    if (hasPendingOrientation && !m_fullscreenVideoNode) {
         offset = IntSize(roundf((viewportSizeBefore.width() - viewportSizeAfter.width()) / 2.0),
             roundf((viewportSizeBefore.height() - viewportSizeAfter.height()) / 2.0));
     }
@@ -4064,7 +4059,7 @@ bool WebPage::touchEvent(const Platform::TouchEvent& event)
 
     bool handled = false;
 
-    if (!event.m_type != Platform::TouchEvent::TouchInjected)
+    if (event.m_type != Platform::TouchEvent::TouchInjected)
         handled = d->m_mainFrame->eventHandler()->handleTouchEvent(PlatformTouchEvent(&tEvent));
 
     if (d->m_preventDefaultOnTouchStart) {

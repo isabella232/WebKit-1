@@ -150,6 +150,7 @@ TestShell::TestShell()
     WebRuntimeFeatures::enableScriptedSpeech(true);
     WebRuntimeFeatures::enableRequestAutocomplete(true);
     WebRuntimeFeatures::enableExperimentalContentSecurityPolicyFeatures(true);
+    WebRuntimeFeatures::enableSeamlessIFrames(true);
 
     // 30 second is the same as the value in Mac DRT.
     // If we use a value smaller than the timeout value of
@@ -256,6 +257,7 @@ void TestShell::runFileTest(const TestParams& params, bool shouldDumpPixels)
     ASSERT(params.testUrl.isValid());
     m_dumpPixelsForCurrentTest = shouldDumpPixels;
     m_testIsPreparing = true;
+    m_testInterfaces->setTestIsRunning(true);
     m_params = params;
     string testUrl = m_params.testUrl.spec();
 
@@ -388,6 +390,7 @@ void TestShell::testFinished()
     if (!m_testIsPending)
         return;
     m_testIsPending = false;
+    m_testInterfaces->setTestIsRunning(false);
     if (m_dumpWhenFinished)
         dump();
     webkit_support::QuitMessageLoop();
@@ -578,8 +581,8 @@ void TestShell::dump()
     bool dumpedAnything = false;
 
     if (shouldDumpAsAudio) {
-        const WebKit::WebArrayBufferView& webArrayBufferView = m_testRunner->audioData();
-        m_printer.handleAudio(webArrayBufferView.baseAddress(), webArrayBufferView.byteLength());
+        const WebKit::WebArrayBufferView* webArrayBufferView = m_testRunner->audioData();
+        m_printer.handleAudio(webArrayBufferView->baseAddress(), webArrayBufferView->byteLength());
         m_printer.handleAudioFooter();
         m_printer.handleTestFooter(true);
 

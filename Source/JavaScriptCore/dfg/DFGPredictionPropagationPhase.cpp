@@ -518,7 +518,13 @@ private:
             changed |= mergeDefaultFlags(node);
             break;
         }
-            
+
+        case TypeOf: {
+            changed |= setPrediction(SpecString);
+            changed |= mergeDefaultFlags(node);
+            break;
+        }
+
         case GetById: {
             changed |= mergePrediction(node.getHeapPrediction());
             changed |= mergeDefaultFlags(node);
@@ -800,11 +806,11 @@ private:
         case GlobalVarWatchpoint:
         case GarbageValue:
         case InheritorIDWatchpoint:
+        case Phantom:
             changed |= mergeDefaultFlags(node);
             break;
             
         // These gets ignored because it doesn't do anything.
-        case Phantom:
         case InlineStart:
         case Nop:
         case CountExecution:

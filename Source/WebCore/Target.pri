@@ -243,6 +243,8 @@ SOURCES += \
     Modules/notifications/NotificationCenter.cpp \
     Modules/notifications/NotificationController.cpp \
     Modules/notifications/WorkerContextNotifications.cpp \
+    Modules/proximity/DeviceProximityController.cpp \
+    Modules/proximity/DeviceProximityEvent.cpp \
     css/BasicShapeFunctions.cpp \
     css/CSSAspectRatioValue.cpp \
     css/CSSBasicShapes.cpp \
@@ -697,6 +699,7 @@ SOURCES += \
     html/WeekInputType.cpp \
     html/canvas/CanvasGradient.cpp \
     html/canvas/CanvasPattern.cpp \
+    html/canvas/CanvasProxy.cpp \
     html/canvas/CanvasRenderingContext.cpp \
     html/canvas/CanvasRenderingContext2D.cpp \
     html/canvas/CanvasStyle.cpp \
@@ -710,6 +713,7 @@ SOURCES += \
     html/parser/HTMLFormattingElementList.cpp \
     html/parser/HTMLMetaCharsetParser.cpp \
     html/parser/HTMLParserIdioms.cpp \
+    html/parser/HTMLParserOptions.cpp \
     html/parser/HTMLParserScheduler.cpp \
     html/parser/HTMLPreloadScanner.cpp \
     html/parser/HTMLScriptRunner.cpp \
@@ -1419,6 +1423,10 @@ HEADERS += \
     Modules/notifications/NotificationController.h \
     Modules/notifications/WorkerContextNotifications.h \
     \
+    Modules/proximity/DeviceProximityClient.h \
+    Modules/proximity/DeviceProximityController.h \
+    Modules/proximity/DeviceProximityEvent.h \
+    \
     Modules/webdatabase/AbstractDatabase.h \
     Modules/webdatabase/AbstractDatabaseServer.h \
     Modules/webdatabase/ChangeVersionWrapper.h \
@@ -1746,6 +1754,7 @@ HEADERS += \
     history/PageCache.h \
     html/canvas/CanvasGradient.h \
     html/canvas/CanvasPattern.h \
+    html/canvas/CanvasProxy.h \
     html/canvas/CanvasRenderingContext.h \
     html/canvas/CanvasRenderingContext2D.h \
     html/canvas/CanvasStyle.h \
@@ -3035,7 +3044,6 @@ enable?(INDEXED_DATABASE) {
         Modules/indexeddb/IDBFactoryBackendImpl.h \
         Modules/indexeddb/IDBIndex.h \
         Modules/indexeddb/IDBIndexBackendInterface.h \
-        Modules/indexeddb/IDBIndexBackendImpl.h \
         Modules/indexeddb/IDBKey.h \
         Modules/indexeddb/IDBKeyRange.h \
         Modules/indexeddb/IDBObjectStore.h \
@@ -3063,7 +3071,6 @@ enable?(INDEXED_DATABASE) {
         Modules/indexeddb/IDBFactoryBackendInterface.cpp \
         Modules/indexeddb/IDBFactoryBackendImpl.cpp \
         Modules/indexeddb/IDBIndex.cpp \
-        Modules/indexeddb/IDBIndexBackendImpl.cpp \
         Modules/indexeddb/IDBKey.cpp \
         Modules/indexeddb/IDBKeyRange.cpp \
         Modules/indexeddb/IDBObjectStore.cpp \
@@ -3368,6 +3375,7 @@ enable?(WEB_AUDIO) {
         Modules/webaudio/MediaElementAudioSourceNode.h \
         Modules/webaudio/MediaStreamAudioSourceNode.h \
         Modules/webaudio/OfflineAudioCompletionEvent.h \
+        Modules/webaudio/OfflineAudioContext.h \
         Modules/webaudio/OfflineAudioDestinationNode.h \
         Modules/webaudio/OscillatorNode.h \
         Modules/webaudio/RealtimeAnalyser.h \
@@ -3459,6 +3467,7 @@ enable?(WEB_AUDIO) {
         Modules/webaudio/MediaElementAudioSourceNode.cpp \
         Modules/webaudio/MediaStreamAudioSourceNode.cpp \
         Modules/webaudio/OfflineAudioCompletionEvent.cpp \
+        Modules/webaudio/OfflineAudioContext.cpp \
         Modules/webaudio/OfflineAudioDestinationNode.cpp \
         Modules/webaudio/OscillatorNode.cpp \
         Modules/webaudio/RealtimeAnalyser.cpp \
@@ -4005,6 +4014,14 @@ enable?(WEBGL) {
         html/canvas/WebGLTexture.cpp \
         html/canvas/WebGLUniformLocation.cpp \
         html/canvas/WebGLVertexArrayObjectOES.cpp
+}
+
+enable?(CANVAS_PROXY) {
+    HEADERS += \
+        html/canvas/CanvasProxy.h
+
+    SOURCES += \
+        html/canvas/CanvasProxy.cpp
 }
 
 use?(3D_GRAPHICS) {

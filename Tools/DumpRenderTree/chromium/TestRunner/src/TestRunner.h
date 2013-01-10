@@ -35,6 +35,7 @@
 #include "CppBoundClass.h"
 #include "WebDeliveredIntentClient.h"
 #include "WebTestRunner.h"
+#include "platform/WebArrayBufferView.h"
 #include "platform/WebURL.h"
 
 namespace WebKit {
@@ -58,7 +59,26 @@ public:
     void reset();
 
     // WebTestRunner implementation.
+    virtual void setTestIsRunning(bool) OVERRIDE;
     virtual bool shouldDumpEditingCallbacks() const OVERRIDE;
+    virtual bool shouldDumpAsText() const OVERRIDE;
+    virtual void setShouldDumpAsText(bool) OVERRIDE;
+    virtual bool shouldGeneratePixelResults() const OVERRIDE;
+    virtual void setShouldGeneratePixelResults(bool) OVERRIDE;
+    virtual bool shouldDumpChildFrameScrollPositions() const OVERRIDE;
+    virtual bool shouldDumpChildFramesAsText() const OVERRIDE;
+    virtual bool shouldDumpAsAudio() const OVERRIDE;
+    virtual const WebKit::WebArrayBufferView* audioData() const OVERRIDE;
+    virtual bool shouldDumpFrameLoadCallbacks() const OVERRIDE;
+    virtual void setShouldDumpFrameLoadCallbacks(bool) OVERRIDE;
+    virtual bool shouldDumpUserGestureInFrameLoadCallbacks() const OVERRIDE;
+    virtual bool stopProvisionalFrameLoads() const OVERRIDE;
+    virtual bool shouldDumpTitleChanges() const OVERRIDE;
+    virtual bool shouldDumpCreateView() const OVERRIDE;
+    virtual bool canOpenWindows() const OVERRIDE;
+    virtual bool shouldDumpResourceLoadCallbacks() const OVERRIDE;
+    virtual bool shouldDumpResourceRequestCallbacks() const OVERRIDE;
+    virtual bool shouldDumpResourceResponseMIMETypes() const OVERRIDE;
 
 protected:
     // FIXME: make these private once the move from DRTTestRunner to TestRunner
@@ -184,6 +204,61 @@ private:
     // ignores any that may be present.
     void dumpEditingCallbacks(const CppArgumentList&, CppVariant*);
 
+    // This function sets a flag that tells the test_shell to dump pages as
+    // plain text, rather than as a text representation of the renderer's state.
+    // It takes an optional argument, whether to dump pixels results or not.
+    void dumpAsText(const CppArgumentList&, CppVariant*);
+
+    // This function sets a flag that tells the test_shell to print out the
+    // scroll offsets of the child frames. It ignores all.
+    void dumpChildFrameScrollPositions(const CppArgumentList&, CppVariant*);
+
+    // This function sets a flag that tells the test_shell to recursively
+    // dump all frames as plain text if the dumpAsText flag is set.
+    // It takes no arguments, and ignores any that may be present.
+    void dumpChildFramesAsText(const CppArgumentList&, CppVariant*);
+
+    // Deals with Web Audio WAV file data.
+    void setAudioData(const CppArgumentList&, CppVariant*);
+
+    // This function sets a flag that tells the test_shell to print a line of
+    // descriptive text for each frame load callback. It takes no arguments, and
+    // ignores any that may be present.
+    void dumpFrameLoadCallbacks(const CppArgumentList&, CppVariant*);
+
+    // This function sets a flag that tells the test_shell to print a line of
+    // user gesture status text for some frame load callbacks. It takes no
+    // arguments, and ignores any that may be present.
+    void dumpUserGestureInFrameLoadCallbacks(const CppArgumentList&, CppVariant*);
+
+    // If true, causes provisional frame loads to be stopped for the remainder of
+    // the test.
+    void setStopProvisionalFrameLoads(const CppArgumentList&, CppVariant*);
+
+    void dumpTitleChanges(const CppArgumentList&, CppVariant*);
+
+    // This function sets a flag that tells the test_shell to dump all calls to
+    // WebViewClient::createView().
+    // It takes no arguments, and ignores any that may be present.
+    void dumpCreateView(const CppArgumentList&, CppVariant*);
+
+    void setCanOpenWindows(const CppArgumentList&, CppVariant*);
+
+    // This function sets a flag that tells the test_shell to dump a descriptive
+    // line for each resource load callback. It takes no arguments, and ignores
+    // any that may be present.
+    void dumpResourceLoadCallbacks(const CppArgumentList&, CppVariant*);
+
+    // This function sets a flag that tells the test_shell to print a line of
+    // descriptive text for each element that requested a resource. It takes no
+    // arguments, and ignores any that may be present.
+    void dumpResourceRequestCallbacks(const CppArgumentList&, CppVariant*);
+
+    // This function sets a flag that tells the test_shell to dump the MIME type
+    // for each resource that was loaded. It takes no arguments, and ignores any
+    // that may be present.
+    void dumpResourceResponseMIMETypes(const CppArgumentList&, CppVariant*);
+
     ///////////////////////////////////////////////////////////////////////////
     // Methods interacting with the WebTestProxy
 
@@ -218,6 +293,8 @@ private:
     bool elementDoesAutoCompleteForElementWithId(const WebKit::WebString&);
     int numberOfActiveAnimations();
 
+    bool m_testIsRunning;
+
     WebKit::WebURL m_userStyleSheetLocation;
 
     // globalFlag is used by a number of layout tests in http/tests/security/dataURL.
@@ -229,6 +306,63 @@ private:
     // If true, the test_shell will write a descriptive line for each editing
     // command.
     bool m_dumpEditingCallbacks;
+
+    // If true, the test_shell will generate pixel results in dumpAsText mode
+    bool m_generatePixelResults;
+
+    // If true, the test_shell will produce a plain text dump rather than a
+    // text representation of the renderer.
+    bool m_dumpAsText;
+
+    // If true and if dump_as_text_ is true, the test_shell will recursively
+    // dump all frames as plain text.
+    bool m_dumpChildFramesAsText;
+
+    // If true, the test_shell will print out the child frame scroll offsets as
+    // well.
+    bool m_dumpChildFrameScrollPositions;
+
+    // If true, the test_shell will output a base64 encoded WAVE file.
+    bool m_dumpAsAudio;
+
+    // If true, the test_shell will output a descriptive line for each frame
+    // load callback.
+    bool m_dumpFrameLoadCallbacks;
+
+    // If true, the test_shell will output a line of the user gesture status
+    // text for some frame load callbacks.
+    bool m_dumpUserGestureInFrameLoadCallbacks;
+
+    // If true, stops provisional frame loads during the
+    // DidStartProvisionalLoadForFrame callback.
+    bool m_stopProvisionalFrameLoads;
+
+    // If true, output a message when the page title is changed.
+    bool m_dumpTitleChanges;
+
+    // If true, output a descriptive line each time WebViewClient::createView
+    // is invoked.
+    bool m_dumpCreateView;
+
+    // If true, new windows can be opened via javascript or by plugins. By
+    // default, set to false and can be toggled to true using
+    // setCanOpenWindows().
+    bool m_canOpenWindows;
+
+    // If true, the test_shell will output a descriptive line for each resource
+    // load callback.
+    bool m_dumpResourceLoadCallbacks;
+
+    // If true, the test_shell will output a descriptive line for each resource
+    // request callback.
+    bool m_dumpResourceRequestCallbacks;
+
+    // If true, the test_shell will output the MIME type for each resource that 
+    // was loaded.
+    bool m_dumpResourceResponseMIMETypes;
+
+    // WAV audio data is stored here.
+    WebKit::WebArrayBufferView m_audioData;
 
     WebTestDelegate* m_delegate;
     WebKit::WebView* m_webView;

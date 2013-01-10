@@ -70,6 +70,7 @@
 #include <wtf/MemoryInstrumentationHashMap.h>
 #include <wtf/MemoryInstrumentationHashSet.h>
 #include <wtf/MemoryInstrumentationListHashSet.h>
+#include <wtf/TemporaryChange.h>
 
 using namespace std;
 using namespace WTF;
@@ -116,6 +117,8 @@ typedef WTF::HashMap<RenderBlock*, OwnPtr<ListHashSet<RenderInline*> > > Continu
 typedef WTF::HashSet<RenderBlock*> DelayedUpdateScrollInfoSet;
 static int gDelayUpdateScrollInfo = 0;
 static DelayedUpdateScrollInfoSet* gDelayedUpdateScrollInfoSet = 0;
+
+static bool gIsInColumnFlowSplit = false;
 
 bool RenderBlock::s_canPropagateFloatIntoSibling = false;
 
@@ -829,30 +832,33 @@ void RenderBlock::addChildIgnoringAnonymousColumnBlocks(RenderObject* newChild, 
         beforeChild = beforeChild->nextSibling();
 
     // Check for a spanning element in columns.
-    RenderBlock* columnsBlockAncestor = columnsBlockForSpanningElement(newChild);
-    if (columnsBlockAncestor) {
-        // We are placing a column-span element inside a block. 
-        RenderBlock* newBox = createAnonymousColumnSpanBlock();
+    if (!gIsInColumnFlowSplit) {
+        RenderBlock* columnsBlockAncestor = columnsBlockForSpanningElement(newChild);
+        if (columnsBlockAncestor) {
+            TemporaryChange<bool> isInColumnFlowSplit(gIsInColumnFlowSplit, true);
+            // We are placing a column-span element inside a block.
+            RenderBlock* newBox = createAnonymousColumnSpanBlock();
         
-        if (columnsBlockAncestor != this) {
-            // We are nested inside a multi-column element and are being split by the span.  We have to break up
-            // our block into continuations.
-            RenderBoxModelObject* oldContinuation = continuation();
+            if (columnsBlockAncestor != this) {
+                // We are nested inside a multi-column element and are being split by the span. We have to break up
+                // our block into continuations.
+                RenderBoxModelObject* oldContinuation = continuation();
 
-            // When we split an anonymous block, there's no need to do any continuation hookup,
-            // since we haven't actually split a real element.
-            if (!isAnonymousBlock())
-                setContinuation(newBox);
+                // When we split an anonymous block, there's no need to do any continuation hookup,
+                // since we haven't actually split a real element.
+                if (!isAnonymousBlock())
+                    setContinuation(newBox);
 
-            splitFlow(beforeChild, newBox, newChild, oldContinuation);
+                splitFlow(beforeChild, newBox, newChild, oldContinuation);
+                return;
+            }
+
+            // We have to perform a split of this block's children. This involves creating an anonymous block box to hold
+            // the column-spanning |newChild|. We take all of the children from before |newChild| and put them into
+            // one anonymous columns block, and all of the children after |newChild| go into another anonymous block.
+            makeChildrenAnonymousColumnBlocks(beforeChild, newBox, newChild);
             return;
         }
-
-        // We have to perform a split of this block's children.  This involves creating an anonymous block box to hold
-        // the column-spanning |newChild|.  We take all of the children from before |newChild| and put them into
-        // one anonymous columns block, and all of the children after |newChild| go into another anonymous block.
-        makeChildrenAnonymousColumnBlocks(beforeChild, newBox, newChild);
-        return;
     }
 
     bool madeBoxesNonInline = false;
@@ -1286,8 +1292,8 @@ bool RenderBlock::isSelfCollapsingBlock() const
 
 void RenderBlock::startDelayUpdateScrollInfo()
 {
-    if (!gDelayedUpdateScrollInfoSet) {
-        ASSERT(!gDelayUpdateScrollInfo);
+    if (gDelayUpdateScrollInfo == 0) {
+        ASSERT(!gDelayedUpdateScrollInfoSet);
         gDelayedUpdateScrollInfoSet = new DelayedUpdateScrollInfoSet;
     }
     ASSERT(gDelayedUpdateScrollInfoSet);
@@ -1301,22 +1307,15 @@ void RenderBlock::finishDelayUpdateScrollInfo()
     if (gDelayUpdateScrollInfo == 0) {
         ASSERT(gDelayedUpdateScrollInfoSet);
 
-        Vector<RenderBlock*> infoSet;
-        while (gDelayedUpdateScrollInfoSet && gDelayedUpdateScrollInfoSet->size()) {
-            copyToVector(*gDelayedUpdateScrollInfoSet, infoSet);
-            for (Vector<RenderBlock*>::iterator it = infoSet.begin(); it != infoSet.end(); ++it) {
-                RenderBlock* block = *it;
-                // |block| may have been destroyed at this point, but then it will have been removed from gDelayedUpdateScrollInfoSet.
-                if (gDelayedUpdateScrollInfoSet && gDelayedUpdateScrollInfoSet->contains(block)) {
-                    gDelayedUpdateScrollInfoSet->remove(block);
-                    if (block->hasOverflowClip())
-                        block->layer()->updateScrollInfoAfterLayout();
-                }
+        OwnPtr<DelayedUpdateScrollInfoSet> infoSet(adoptPtr(gDelayedUpdateScrollInfoSet));
+        gDelayedUpdateScrollInfoSet = 0;
+
+        for (DelayedUpdateScrollInfoSet::iterator it = infoSet->begin(); it != infoSet->end(); ++it) {
+            RenderBlock* block = *it;
+            if (block->hasOverflowClip()) {
+                block->layer()->updateScrollInfoAfterLayout();
             }
         }
-        delete gDelayedUpdateScrollInfoSet;
-        gDelayedUpdateScrollInfoSet = 0;
-        ASSERT(!gDelayUpdateScrollInfo);
     }
 }
 
@@ -3030,10 +3029,7 @@ void RenderBlock::paintObject(PaintInfo& paintInfo, const LayoutPoint& paintOffs
     // 6. paint continuation outlines.
     if ((paintPhase == PaintPhaseOutline || paintPhase == PaintPhaseChildOutlines)) {
         RenderInline* inlineCont = inlineElementContinuation();
-        // FIXME: For now, do not add continuations for outline painting by our containing block if we are a relative positioned
-        // anonymous block (i.e. have our own layer). This is because a block depends on renderers in its continuation table being
-        // in the same layer. 
-        if (inlineCont && inlineCont->hasOutline() && inlineCont->style()->visibility() == VISIBLE && !hasLayer()) {
+        if (inlineCont && inlineCont->hasOutline() && inlineCont->style()->visibility() == VISIBLE) {
             RenderInline* inlineRenderer = toRenderInline(inlineCont->node()->renderer());
             RenderBlock* cb = containingBlock();
 
@@ -3045,9 +3041,12 @@ void RenderBlock::paintObject(PaintInfo& paintInfo, const LayoutPoint& paintOffs
                 }
             }
 
-            if (!inlineEnclosedInSelfPaintingLayer)
+            // Do not add continuations for outline painting by our containing block if we are a relative positioned
+            // anonymous block (i.e. have our own layer), paint them straightaway instead. This is because a block depends on renderers in its continuation table being
+            // in the same layer. 
+            if (!inlineEnclosedInSelfPaintingLayer && !hasLayer())
                 cb->addContinuationWithOutline(inlineRenderer);
-            else if (!inlineRenderer->firstLineBox())
+            else if (!inlineRenderer->firstLineBox() || (!inlineEnclosedInSelfPaintingLayer && hasLayer()))
                 inlineRenderer->paintOutline(paintInfo.context, paintOffset - locationOffset() + inlineRenderer->containingBlock()->location());
         }
         paintContinuationOutlines(paintInfo, paintOffset);
@@ -3072,7 +3071,7 @@ LayoutPoint RenderBlock::flipFloatForWritingModeForChild(const FloatingObject* c
     // case.
     if (isHorizontalWritingMode())
         return LayoutPoint(point.x(), point.y() + height() - child->renderer()->height() - 2 * yPositionForFloatIncludingMargin(child));
-    return LayoutPoint(point.x() + width() - child->width() - 2 * xPositionForFloatIncludingMargin(child), point.y());
+    return LayoutPoint(point.x() + width() - child->renderer()->width() - 2 * xPositionForFloatIncludingMargin(child), point.y());
 }
 
 void RenderBlock::paintFloats(PaintInfo& paintInfo, const LayoutPoint& paintOffset, bool preservePhase)
@@ -5584,7 +5583,7 @@ void RenderBlock::computePreferredLogicalWidths()
 
     RenderStyle* styleToUse = style();
     if (!isTableCell() && styleToUse->logicalWidth().isFixed() && styleToUse->logicalWidth().value() >= 0 
-       && style()->marqueeBehavior() != MALTERNATE && !(isDeprecatedFlexItem() && !styleToUse->logicalWidth().intValue()))
+        && !(isDeprecatedFlexItem() && !styleToUse->logicalWidth().intValue()))
         m_minPreferredLogicalWidth = m_maxPreferredLogicalWidth = adjustContentBoxLogicalWidthForBoxSizing(styleToUse->logicalWidth().value());
     else {
         m_minPreferredLogicalWidth = 0;
@@ -6559,28 +6558,6 @@ static bool shouldCheckLines(RenderObject* obj)
             && (!obj->isDeprecatedFlexibleBox() || obj->style()->boxOrient() == VERTICAL);
 }
 
-static RootInlineBox* getLineAtIndex(RenderBlock* block, int i, int& count)
-{
-    if (block->style()->visibility() == VISIBLE) {
-        if (block->childrenInline()) {
-            for (RootInlineBox* box = block->firstRootBox(); box; box = box->nextRootBox()) {
-                if (count++ == i)
-                    return box;
-            }
-        }
-        else {
-            for (RenderObject* obj = block->firstChild(); obj; obj = obj->nextSibling()) {
-                if (shouldCheckLines(obj)) {
-                    RootInlineBox *box = getLineAtIndex(toRenderBlock(obj), i, count);
-                    if (box)
-                        return box;
-                }
-            }
-        }
-    }
-    return 0;
-}
-
 static int getHeightForLineCount(RenderBlock* block, int l, bool includeBottom, int& count)
 {
     if (block->style()->visibility() == VISIBLE) {
@@ -6608,13 +6585,30 @@ static int getHeightForLineCount(RenderBlock* block, int l, bool includeBottom, 
     return -1;
 }
 
-RootInlineBox* RenderBlock::lineAtIndex(int i)
+RootInlineBox* RenderBlock::lineAtIndex(int i) const
 {
-    int count = 0;
-    return getLineAtIndex(this, i, count);
+    ASSERT(i >= 0);
+
+    if (style()->visibility() != VISIBLE)
+        return 0;
+
+    if (childrenInline()) {
+        for (RootInlineBox* box = firstRootBox(); box; box = box->nextRootBox())
+            if (!i--)
+                return box;
+    } else {
+        for (RenderObject* child = firstChild(); child; child = child->nextSibling()) {
+            if (!shouldCheckLines(child))
+                continue;
+            if (RootInlineBox* box = toRenderBlock(child)->lineAtIndex(i))
+                return box;
+        }
+    }
+
+    return 0;
 }
 
-int RenderBlock::lineCount()
+int RenderBlock::lineCount() const
 {
     int count = 0;
     if (style()->visibility() == VISIBLE) {

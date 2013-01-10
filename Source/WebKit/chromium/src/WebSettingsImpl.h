@@ -66,12 +66,14 @@ public:
     virtual void setAllowRunningOfInsecureContent(bool);
     virtual void setAllowScriptsToCloseWindows(bool);
     virtual void setAllowUniversalAccessFromFileURLs(bool);
+    virtual void setAntialiased2dCanvasEnabled(bool);
     virtual void setApplyDeviceScaleFactorInCompositor(bool);
     virtual void setApplyPageScaleFactorInCompositor(bool);
     virtual void setAsynchronousSpellCheckingEnabled(bool);
     virtual void setAuthorAndUserStylesEnabled(bool);
     virtual void setAutoZoomFocusedNodeToLegibleScale(bool);
     virtual void setCaretBrowsingEnabled(bool);
+    virtual void setCompositedScrollingForFramesEnabled(bool);
     virtual void setCookieEnabled(bool);
     virtual void setCursiveFontFamily(const WebString&, UScriptCode = USCRIPT_COMMON);
     virtual void setDNSPrefetchingEnabled(bool);
@@ -156,6 +158,7 @@ public:
     virtual void setTextDirectionSubmenuInclusionBehaviorNeverIncluded();
     virtual void setTouchDragDropEnabled(bool);
     virtual void setUnifiedTextCheckerEnabled(bool);
+    virtual void setUnsafePluginPastingEnabled(bool);
     virtual void setUserStyleSheetLocation(const WebURL&);
     virtual void setUsesEncodingDetector(bool);
     virtual void setUsesPageCache(bool);

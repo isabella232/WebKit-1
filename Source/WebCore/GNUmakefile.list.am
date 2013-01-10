@@ -79,6 +79,8 @@ webcore_built_sources += \
 	DerivedSources/WebCore/JSCanvasGradient.h \
 	DerivedSources/WebCore/JSCanvasPattern.cpp \
 	DerivedSources/WebCore/JSCanvasPattern.h \
+	DerivedSources/WebCore/JSCanvasProxy.cpp \
+	DerivedSources/WebCore/JSCanvasProxy.h \
 	DerivedSources/WebCore/JSCanvasRenderingContext2D.cpp \
 	DerivedSources/WebCore/JSCanvasRenderingContext2D.h \
 	DerivedSources/WebCore/JSCanvasRenderingContext.cpp \
@@ -1262,6 +1264,7 @@ dom_binding_idls += \
 	$(WebCore)/Modules/notifications/Notification.idl \
 	$(WebCore)/Modules/notifications/NotificationCenter.idl \
 	$(WebCore)/Modules/notifications/NotificationPermissionCallback.idl \
+	$(WebCore)/Modules/proximity/DeviceProximityEvent.idl \
 	$(WebCore)/Modules/quota/DOMWindowQuota.idl \
 	$(WebCore)/Modules/quota/StorageInfo.idl \
 	$(WebCore)/Modules/quota/StorageInfoErrorCallback.idl \
@@ -1514,6 +1517,7 @@ dom_binding_idls += \
 	$(WebCore)/html/canvas/ArrayBufferView.idl \
 	$(WebCore)/html/canvas/CanvasGradient.idl \
 	$(WebCore)/html/canvas/CanvasPattern.idl \
+	$(WebCore)/html/canvas/CanvasProxy.idl \
 	$(WebCore)/html/canvas/CanvasRenderingContext.idl \
 	$(WebCore)/html/canvas/CanvasRenderingContext2D.idl \
 	$(WebCore)/html/canvas/DataView.idl \
@@ -1869,8 +1873,6 @@ webcore_modules_sources += \
 	Source/WebCore/Modules/indexeddb/IDBFactoryBackendInterface.h \
 	Source/WebCore/Modules/indexeddb/IDBFactory.cpp \
 	Source/WebCore/Modules/indexeddb/IDBFactory.h \
-	Source/WebCore/Modules/indexeddb/IDBIndexBackendImpl.cpp \
-	Source/WebCore/Modules/indexeddb/IDBIndexBackendImpl.h \
 	Source/WebCore/Modules/indexeddb/IDBIndexBackendInterface.h \
 	Source/WebCore/Modules/indexeddb/IDBIndex.cpp \
 	Source/WebCore/Modules/indexeddb/IDBIndex.h \
@@ -1991,6 +1993,11 @@ webcore_modules_sources += \
 	Source/WebCore/Modules/notifications/NotificationPermissionCallback.h \
 	Source/WebCore/Modules/notifications/WorkerContextNotifications.cpp \
 	Source/WebCore/Modules/notifications/WorkerContextNotifications.h \
+	Source/WebCore/Modules/proximity/DeviceProximity.h \
+	Source/WebCore/Modules/proximity/DeviceProximityController.cpp \
+	Source/WebCore/Modules/proximity/DeviceProximityController.h \
+	Source/WebCore/Modules/proximity/DeviceProximityEvent.cpp \
+	Source/WebCore/Modules/proximity/DeviceProximityEvent.h \
 	Source/WebCore/Modules/quota/DOMWindowQuota.cpp \
 	Source/WebCore/Modules/quota/DOMWindowQuota.h \
 	Source/WebCore/Modules/quota/StorageInfo.cpp \
@@ -2096,6 +2103,7 @@ webcore_modules_sources += \
 	Source/WebCore/Modules/webdatabase/Database.h \
 	Source/WebCore/Modules/webdatabase/DatabaseAuthorizer.cpp \
 	Source/WebCore/Modules/webdatabase/DatabaseAuthorizer.h \
+	Source/WebCore/Modules/webdatabase/DatabaseBasicTypes.h \
 	Source/WebCore/Modules/webdatabase/DatabaseCallback.h \
 	Source/WebCore/Modules/webdatabase/DatabaseContext.cpp \
 	Source/WebCore/Modules/webdatabase/DatabaseContext.h \
@@ -3199,6 +3207,8 @@ webcore_sources += \
 	Source/WebCore/html/canvas/CanvasGradient.h \
 	Source/WebCore/html/canvas/CanvasPattern.cpp \
 	Source/WebCore/html/canvas/CanvasPattern.h \
+	Source/WebCore/html/canvas/CanvasProxy.cpp \
+	Source/WebCore/html/canvas/CanvasProxy.h \
 	Source/WebCore/html/canvas/CanvasRenderingContext2D.cpp \
 	Source/WebCore/html/canvas/CanvasRenderingContext2D.h \
 	Source/WebCore/html/canvas/CanvasRenderingContext.cpp \
@@ -3534,6 +3544,8 @@ webcore_sources += \
 	Source/WebCore/html/parser/HTMLMetaCharsetParser.h \
 	Source/WebCore/html/parser/HTMLParserIdioms.cpp \
 	Source/WebCore/html/parser/HTMLParserIdioms.h \
+	Source/WebCore/html/parser/HTMLParserOptions.cpp \
+	Source/WebCore/html/parser/HTMLParserOptions.h \
 	Source/WebCore/html/parser/HTMLParserScheduler.cpp \
 	Source/WebCore/html/parser/HTMLParserScheduler.h \
 	Source/WebCore/html/parser/HTMLPreloadScanner.cpp \
@@ -5415,6 +5427,7 @@ webcore_platform_sources += \
 	Source/WebCore/platform/graphics/filters/CustomFilterParameterList.h \
 	Source/WebCore/platform/graphics/filters/CustomFilterProgram.cpp \
 	Source/WebCore/platform/graphics/filters/CustomFilterProgram.h \
+	Source/WebCore/platform/graphics/filters/CustomFilterProgramClient.h \
 	Source/WebCore/platform/graphics/filters/CustomFilterProgramInfo.cpp \
 	Source/WebCore/platform/graphics/filters/CustomFilterProgramInfo.h \
 	Source/WebCore/platform/graphics/filters/CustomFilterRenderer.cpp \
@@ -5700,10 +5713,10 @@ webcore_platform_sources += \
 	Source/WebCore/platform/image-decoders/ImageDecoder.h \
 	Source/WebCore/platform/image-decoders/jpeg/JPEGImageDecoder.cpp \
 	Source/WebCore/platform/image-decoders/jpeg/JPEGImageDecoder.h \
-	Source/WebCore/platform/image-decoders/webp/WEBPImageDecoder.cpp \
-	Source/WebCore/platform/image-decoders/webp/WEBPImageDecoder.h \
 	Source/WebCore/platform/image-decoders/png/PNGImageDecoder.cpp \
 	Source/WebCore/platform/image-decoders/png/PNGImageDecoder.h \
+	Source/WebCore/platform/image-decoders/webp/WEBPImageDecoder.cpp \
+	Source/WebCore/platform/image-decoders/webp/WEBPImageDecoder.h \
 	Source/WebCore/platform/LayoutTestSupport.cpp \
 	Source/WebCore/platform/LayoutTestSupport.h \
 	Source/WebCore/platform/linux/GamepadDeviceLinux.cpp \
@@ -5777,6 +5790,7 @@ webcore_platform_sources += \
 	Source/WebCore/platform/network/ProxyServer.h \
 	Source/WebCore/platform/network/NetworkStateNotifier.cpp \
 	Source/WebCore/platform/network/NetworkStateNotifier.h \
+	Source/WebCore/platform/network/NetworkStorageSession.h \
 	Source/WebCore/platform/network/NetworkStorageSessionStub.cpp \
 	Source/WebCore/platform/network/ParsedContentType.cpp \
 	Source/WebCore/platform/network/ParsedContentType.h \

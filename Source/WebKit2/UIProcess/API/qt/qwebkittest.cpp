@@ -168,7 +168,7 @@ QJsonObject QWebKitTest::viewport() const
 QVariant QWebKitTest::devicePixelRatio() const
 {
     if (const PageViewportController* const viewport = m_webViewPrivate->viewportController())
-        return viewport->devicePixelRatio();
+        return viewport->deviceScaleFactor();
     return 1.0;
 }
 

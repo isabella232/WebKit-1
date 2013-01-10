@@ -7,6 +7,7 @@ WEBCORE_CSS_VALUE_KEYWORDS := $(WebCore)/css/CSSValueKeywords.in
 webcore_cppflags += \
 	-DWTF_USE_FREETYPE=1 \
 	-DWTF_USE_HARFBUZZ_NG=1 \
+	-DWTF_USE_WEBP=1 \
 	-I$(srcdir)/Source/ThirdParty/ANGLE/src \
 	-I$(srcdir)/Source/ThirdParty/ANGLE/include \
 	-I$(srcdir)/Source/ThirdParty/ANGLE/include/GLSLANG \
@@ -19,6 +20,7 @@ webcore_cppflags += \
 	-I$(srcdir)/Source/WebCore/Modules/mediastream \
 	-I$(srcdir)/Source/WebCore/Modules/navigatorcontentutils \
 	-I$(srcdir)/Source/WebCore/Modules/notifications \
+	-I$(srcdir)/Source/WebCore/Modules/proximity \
 	-I$(srcdir)/Source/WebCore/Modules/quota \
 	-I$(srcdir)/Source/WebCore/Modules/webaudio \
 	-I$(srcdir)/Source/WebCore/Modules/webdatabase \
@@ -72,8 +74,8 @@ webcore_cppflags += \
 	-I$(srcdir)/Source/WebCore/platform/image-decoders/gif \
 	-I$(srcdir)/Source/WebCore/platform/image-decoders/ico \
 	-I$(srcdir)/Source/WebCore/platform/image-decoders/jpeg \
-	-I$(srcdir)/Source/WebCore/platform/image-decoders/webp \
 	-I$(srcdir)/Source/WebCore/platform/image-decoders/png \
+	-I$(srcdir)/Source/WebCore/platform/image-decoders/webp \
 	-I$(srcdir)/Source/WebCore/platform/leveldb \
 	-I$(srcdir)/Source/WebCore/platform/linux \
 	-I$(srcdir)/Source/WebCore/platform/mediastream \
@@ -501,6 +503,7 @@ IDL_PATH := \
     $(WebCore)/Modules/mediasource \
     $(WebCore)/Modules/mediastream \
     $(WebCore)/Modules/notifications \
+    $(WebCore)/Modules/proximity \
     $(WebCore)/Modules/quota \
     $(WebCore)/Modules/webaudio \
     $(WebCore)/Modules/webdatabase \
@@ -736,6 +739,7 @@ EXTRA_DIST += \
 	$(wildcard $(srcdir)/Source/WebCore/Modules/mediastream/*.idl) \
 	$(wildcard $(srcdir)/Source/WebCore/Modules/navigatorcontentutils/*.idl) \
 	$(wildcard $(srcdir)/Source/WebCore/Modules/notifications/*.idl) \
+	$(wildcard $(srcdir)/Source/WebCore/Modules/proximity/*.idl) \
 	$(wildcard $(srcdir)/Source/WebCore/Modules/quota/*.idl) \
 	$(wildcard $(srcdir)/Source/WebCore/Modules/webaudio/*.idl) \
 	$(wildcard $(srcdir)/Source/WebCore/Modules/webdatabase/*.idl) \

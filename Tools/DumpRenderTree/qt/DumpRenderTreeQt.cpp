@@ -203,6 +203,8 @@ void WebPage::resetSettings()
     QWebSettings::setMaximumPagesInCache(0); // reset to default
     settings()->setUserStyleSheetUrl(QUrl()); // reset to default
 
+    DumpRenderTreeSupportQt::setSeamlessIFramesEnabled(true);
+
     DumpRenderTreeSupportQt::setMinimumTimerInterval(handle(), DumpRenderTreeSupportQt::defaultMinimumTimerInterval());
 
     DumpRenderTreeSupportQt::resetInternalsObject(mainFrame()->handle());
@@ -720,6 +722,8 @@ void DumpRenderTree::processLine(const QString &input)
         open(QUrl::fromLocalFile(fi.absoluteFilePath()));
     }
 
+    if (command.timeout > 0)
+        setTimeout(command.timeout);
     fflush(stdout);
 }
 

@@ -33,6 +33,7 @@
 #include "ClientRect.h"
 #include "ClientRectList.h"
 #include "ComposedShadowTreeWalker.h"
+#include "ContentDistributor.h"
 #include "Cursor.h"
 #include "DOMStringList.h"
 #include "DOMWindow.h"
@@ -98,6 +99,10 @@
 #if ENABLE(NETWORK_INFO)
 #include "NetworkInfo.h"
 #include "NetworkInfoController.h"
+#endif
+
+#if ENABLE(PROXIMITY_EVENTS)
+#include "DeviceProximityController.h"
 #endif
 
 #if ENABLE(PAGE_POPUP)
@@ -335,8 +340,7 @@ bool Internals::hasSelectorForIdInShadow(Element* host, const String& idValue, E
         return 0;
     }
 
-    host->shadow()->ensureSelectFeatureSetCollected();
-    return host->shadow()->selectRuleFeatureSet().hasSelectorForId(idValue);
+    return host->shadow()->distributor().ensureSelectFeatureSet(host->shadow()).hasSelectorForId(idValue);
 }
 
 bool Internals::hasSelectorForClassInShadow(Element* host, const String& className, ExceptionCode& ec)
@@ -346,8 +350,7 @@ bool Internals::hasSelectorForClassInShadow(Element* host, const String& classNa
         return 0;
     }
 
-    host->shadow()->ensureSelectFeatureSetCollected();
-    return host->shadow()->selectRuleFeatureSet().hasSelectorForClass(className);
+    return host->shadow()->distributor().ensureSelectFeatureSet(host->shadow()).hasSelectorForClass(className);
 }
 
 bool Internals::hasSelectorForAttributeInShadow(Element* host, const String& attributeName, ExceptionCode& ec)
@@ -357,8 +360,7 @@ bool Internals::hasSelectorForAttributeInShadow(Element* host, const String& att
         return 0;
     }
 
-    host->shadow()->ensureSelectFeatureSetCollected();
-    return host->shadow()->selectRuleFeatureSet().hasSelectorForAttribute(attributeName);
+    return host->shadow()->distributor().ensureSelectFeatureSet(host->shadow()).hasSelectorForAttribute(attributeName);
 }
 
 bool Internals::hasSelectorForPseudoClassInShadow(Element* host, const String& pseudoClass, ExceptionCode& ec)
@@ -368,8 +370,7 @@ bool Internals::hasSelectorForPseudoClassInShadow(Element* host, const String& p
         return 0;
     }
 
-    host->shadow()->ensureSelectFeatureSetCollected();
-    const SelectRuleFeatureSet& featureSet = host->shadow()->selectRuleFeatureSet();
+    const SelectRuleFeatureSet& featureSet = host->shadow()->distributor().ensureSelectFeatureSet(host->shadow());
     if (pseudoClass == "checked")
         return featureSet.hasSelectorForChecked();
     if (pseudoClass == "enabled")
@@ -434,7 +435,7 @@ bool Internals::pauseTransitionAtTimeOnPseudoElement(const String& property, dou
 bool Internals::hasShadowInsertionPoint(const Node* root, ExceptionCode& ec) const
 {
     if (root && root->isShadowRoot())
-        return toShadowRoot(root)->hasShadowInsertionPoint();
+        return ScopeContentDistribution::hasShadowElement(toShadowRoot(root));
 
     ec = INVALID_ACCESS_ERR;
     return 0;
@@ -443,7 +444,7 @@ bool Internals::hasShadowInsertionPoint(const Node* root, ExceptionCode& ec) con
 bool Internals::hasContentElement(const Node* root, ExceptionCode& ec) const
 {
     if (root && root->isShadowRoot())
-        return toShadowRoot(root)->hasContentElement();
+        return ScopeContentDistribution::hasContentElement(toShadowRoot(root));
 
     ec = INVALID_ACCESS_ERR;
     return 0;
@@ -456,7 +457,7 @@ size_t Internals::countElementShadow(const Node* root, ExceptionCode& ec) const
         return 0;
     }
 
-    return toShadowRoot(root)->countElementShadow();
+    return ScopeContentDistribution::countElementShadow(toShadowRoot(root));
 }
 
 bool Internals::attached(Node* node, ExceptionCode& ec)
@@ -1333,6 +1334,23 @@ void Internals::setNetworkInformation(Document* document, const String& eventTyp
 #endif
 }
 
+void Internals::setDeviceProximity(Document* document, const String& eventType, double value, double min, double max, ExceptionCode& ec)
+{
+    if (!document || !document->page()) {
+        ec = INVALID_ACCESS_ERR;
+        return;
+    }
+
+#if ENABLE(PROXIMITY_EVENTS)
+    DeviceProximityController::from(document->page())->didChangeDeviceProximity(value, min, max);
+#else
+    UNUSED_PARAM(eventType);
+    UNUSED_PARAM(value);
+    UNUSED_PARAM(min);
+    UNUSED_PARAM(max);
+#endif
+}
+
 bool Internals::hasSpellingMarker(Document* document, int from, int length, ExceptionCode&)
 {
     if (!document || !document->frame())
@@ -1556,6 +1574,20 @@ String Internals::mainThreadScrollingReasons(Document* document, ExceptionCode& 
         return String();
 
     return page->mainThreadScrollingReasonsAsText();
+}
+
+PassRefPtr<ClientRectList> Internals::nonFastScrollableRects(Document* document, ExceptionCode& ec) const
+{
+    if (!document || !document->frame()) {
+        ec = INVALID_ACCESS_ERR;
+        return 0;
+    }
+
+    Page* page = document->page();
+    if (!page)
+        return 0;
+
+    return page->nonFastScrollableRects(document->frame());
 }
 
 void Internals::garbageCollectDocumentResources(Document* document, ExceptionCode& ec) const

@@ -747,7 +747,7 @@ inline void Element::setAttributeInternal(size_t index, const QualifiedName& nam
         // If there is an Attr node hooked to this attribute, the Attr::setValue() call below
         // will write into the ElementAttributeData.
         // FIXME: Refactor this so it makes some sense.
-        if (RefPtr<Attr> attrNode = attrIfExists(name))
+        if (RefPtr<Attr> attrNode = inSynchronizationOfLazyAttribute ? 0 : attrIfExists(name))
             attrNode->setValue(newValue);
         else
             mutableAttributeData()->attributeItem(index)->setValue(newValue);
@@ -917,15 +917,15 @@ void Element::classAttributeChanged(const AtomicString& newClassString)
 bool Element::shouldInvalidateDistributionWhenAttributeChanged(ElementShadow* elementShadow, const QualifiedName& name, const AtomicString& newValue)
 {
     ASSERT(elementShadow);
-    elementShadow->ensureSelectFeatureSetCollected();
+    const SelectRuleFeatureSet& featureSet = elementShadow->distributor().ensureSelectFeatureSet(elementShadow);
 
     if (isIdAttributeName(name)) {
         AtomicString oldId = attributeData()->idForStyleResolution();
         AtomicString newId = makeIdForStyleResolution(newValue, document()->inQuirksMode());
         if (newId != oldId) {
-            if (!oldId.isEmpty() && elementShadow->selectRuleFeatureSet().hasSelectorForId(oldId))
+            if (!oldId.isEmpty() && featureSet.hasSelectorForId(oldId))
                 return true;
-            if (!newId.isEmpty() && elementShadow->selectRuleFeatureSet().hasSelectorForId(newId))
+            if (!newId.isEmpty() && featureSet.hasSelectorForId(newId))
                 return true;
         }
     }
@@ -937,16 +937,16 @@ bool Element::shouldInvalidateDistributionWhenAttributeChanged(ElementShadow* el
             const bool shouldFoldCase = document()->inQuirksMode();
             const SpaceSplitString& oldClasses = attributeData->classNames();
             const SpaceSplitString newClasses(newClassString, shouldFoldCase);
-            if (checkSelectorForClassChange(oldClasses, newClasses, elementShadow->selectRuleFeatureSet()))
+            if (checkSelectorForClassChange(oldClasses, newClasses, featureSet))
                 return true;
         } else if (const ElementAttributeData* attributeData = this->attributeData()) {
             const SpaceSplitString& oldClasses = attributeData->classNames();
-            if (checkSelectorForClassChange(oldClasses, elementShadow->selectRuleFeatureSet()))
+            if (checkSelectorForClassChange(oldClasses, featureSet))
                 return true;
         }
     }
 
-    return elementShadow->selectRuleFeatureSet().hasSelectorForAttribute(name.localName());
+    return featureSet.hasSelectorForAttribute(name.localName());
 }
 
 // Returns true is the given attribute is an event handler.
@@ -980,8 +980,8 @@ void Element::parserSetAttributes(const Vector<Attribute>& attributeVector, Frag
 
     // If the element is created as result of a paste or drag-n-drop operation
     // we want to remove all the script and event handlers.
-    if (scriptingPermission == DisallowScriptingContent) {
-        unsigned i = 0;
+    if (!scriptingContentIsAllowed(scriptingPermission)) {
+        size_t i = 0;
         while (i < filteredAttributes.size()) {
             Attribute& attribute = filteredAttributes[i];
             if (isEventHandlerAttribute(attribute.name())) {
@@ -1407,6 +1407,13 @@ ElementShadow* Element::ensureShadow()
     ElementRareData* data = elementRareData();
     data->setShadow(adoptPtr(new ElementShadow()));
     return data->shadow();
+}
+
+void Element::didAffectSelector(AffectedSelectorMask mask)
+{
+    setNeedsStyleRecalc();
+    if (ElementShadow* elementShadow = shadowOfParentForDistribution(this))
+        elementShadow->didAffectSelector(mask);
 }
 
 PassRefPtr<ShadowRoot> Element::createShadowRoot(ExceptionCode& ec)

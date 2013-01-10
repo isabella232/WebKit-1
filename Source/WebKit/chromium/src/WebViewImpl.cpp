@@ -53,7 +53,6 @@
 #include "DocumentLoader.h"
 #include "DragController.h"
 #include "DragData.h"
-#include "DragScrollTimer.h"
 #include "DragSession.h"
 #include "Editor.h"
 #include "EventHandler.h"
@@ -414,7 +413,6 @@ WebViewImpl::WebViewImpl(WebViewClient* client)
     , m_autofillPopup(0)
     , m_isTransparent(false)
     , m_tabsToLinks(false)
-    , m_dragScrollTimer(adoptPtr(new DragScrollTimer))
     , m_isCancelingFullScreen(false)
     , m_benchmarkSupport(this)
 #if USE(ACCELERATED_COMPOSITING)
@@ -649,6 +647,12 @@ void WebViewImpl::handleMouseUp(Frame& mainFrame, const WebMouseEvent& event)
 #endif
 }
 
+bool WebViewImpl::handleMouseWheel(Frame& mainFrame, const WebMouseWheelEvent& event)
+{
+    hidePopups();
+    return PageWidgetEventHandler::handleMouseWheel(mainFrame, event);
+}
+
 void WebViewImpl::scrollBy(const WebPoint& delta)
 {
     WebMouseWheelEvent syntheticWheel;
@@ -775,7 +779,7 @@ bool WebViewImpl::handleGestureEvent(const WebGestureEvent& event)
         break;
     }
     case WebInputEvent::GestureDoubleTap:
-        if (m_webSettings->doubleTapToZoomEnabled()) {
+        if (m_webSettings->doubleTapToZoomEnabled() && m_minimumPageScaleFactor != m_maximumPageScaleFactor) {
             m_client->cancelScheduledContentIntents();
             animateZoomAroundPoint(WebPoint(event.x, event.y), DoubleTap);
             eventSwallowed = true;
@@ -1582,18 +1586,8 @@ void WebViewImpl::resize(const WebSize& newSize)
     m_size = newSize;
 
 #if ENABLE(VIEWPORT)
-    if (settings()->viewportEnabled()) {
-        // Fallback width is used to layout sites designed for desktop. The
-        // conventional size used by all mobile browsers is 980. When a mobile
-        // device has a particularly wide screen (such as a 10" tablet held in
-        // landscape), it can be larger.
-        const int standardFallbackWidth = 980;
-        int dpiIndependentViewportWidth = newSize.width / page()->deviceScaleFactor();
-        settings()->setLayoutFallbackWidth(std::max(standardFallbackWidth, dpiIndependentViewportWidth));
-
-        ViewportArguments viewportArguments = mainFrameImpl()->frame()->document()->viewportArguments();
-        m_page->chrome()->client()->dispatchViewportPropertiesDidChange(viewportArguments);
-    }
+    ViewportArguments viewportArguments = mainFrameImpl()->frame()->document()->viewportArguments();
+    m_page->chrome()->client()->dispatchViewportPropertiesDidChange(viewportArguments);
 #endif
 
     WebDevToolsAgentPrivate* agentPrivate = devToolsAgentPrivate();
@@ -2520,6 +2514,12 @@ bool WebViewImpl::isAcceleratedCompositingActive() const
 #endif
 }
 
+void WebViewImpl::willCloseLayerTreeView()
+{
+    setIsAcceleratedCompositingActive(false);
+    m_layerTreeView = 0;
+}
+
 void WebViewImpl::didAcquirePointerLock()
 {
 #if ENABLE(POINTER_LOCK)
@@ -3132,6 +3132,15 @@ void WebViewImpl::setFixedLayoutSize(const WebSize& layoutSize)
     frame->view()->setFixedLayoutSize(layoutSize);
 }
 
+WebCore::FloatSize WebViewImpl::dipSize() const
+{
+    if (!page() || m_webSettings->applyDeviceScaleFactorInCompositor())
+        return FloatSize(m_size.width, m_size.height);
+
+    float deviceScaleFactor = page()->deviceScaleFactor();
+    return FloatSize(m_size.width / deviceScaleFactor, m_size.height / deviceScaleFactor);
+}
+
 void WebViewImpl::performMediaPlayerAction(const WebMediaPlayerAction& action,
                                            const WebPoint& location)
 {
@@ -3227,7 +3236,6 @@ void WebViewImpl::dragSourceEndedAt(
                            false, 0);
     m_page->mainFrame()->eventHandler()->dragSourceEndedAt(pme,
         static_cast<DragOperation>(operation));
-    m_dragScrollTimer->stop();
 }
 
 void WebViewImpl::dragSourceMovedTo(
@@ -3235,7 +3243,6 @@ void WebViewImpl::dragSourceMovedTo(
     const WebPoint& screenPoint,
     WebDragOperation operation)
 {
-    m_dragScrollTimer->triggerScroll(mainFrameImpl()->frameView(), clientPoint);
 }
 
 void WebViewImpl::dragSourceSystemDragEnded()
@@ -3321,8 +3328,6 @@ void WebViewImpl::dragTargetDrop(const WebPoint& clientPoint,
 
     m_dragOperation = WebDragOperationNone;
     m_currentDragData = 0;
-
-    m_dragScrollTimer->stop();
 }
 
 WebDragOperation WebViewImpl::dragTargetDragEnterOrOver(const WebPoint& clientPoint, const WebPoint& screenPoint, DragAction dragAction, int keyModifiers)
@@ -3349,11 +3354,6 @@ WebDragOperation WebViewImpl::dragTargetDragEnterOrOver(const WebPoint& clientPo
         dropEffect = DragOperationNone;
 
      m_dragOperation = static_cast<WebDragOperation>(dropEffect);
-
-    if (dragAction == DragOver)
-        m_dragScrollTimer->triggerScroll(mainFrameImpl()->frameView(), clientPoint);
-    else
-        m_dragScrollTimer->stop();
 
     return m_dragOperation;
 }

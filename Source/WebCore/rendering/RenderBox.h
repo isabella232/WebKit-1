@@ -205,9 +205,8 @@ public:
     virtual LayoutUnit offsetWidth() const { return width(); }
     virtual LayoutUnit offsetHeight() const { return height(); }
 
-    // FIXME: The implementation for these functions will change once we move to subpixel layout. See bug 60318.
-    virtual int pixelSnappedOffsetWidth() const { return pixelSnappedWidth(); }
-    virtual int pixelSnappedOffsetHeight() const { return pixelSnappedHeight(); }
+    virtual int pixelSnappedOffsetWidth() const OVERRIDE;
+    virtual int pixelSnappedOffsetHeight() const OVERRIDE;
 
     // More IE extensions.  clientWidth and clientHeight represent the interior of an object
     // excluding border and scrollbar.  clientLeft/Top are just the borderLeftWidth and borderTopWidth.
@@ -444,8 +443,9 @@ public:
     virtual bool logicalScroll(ScrollLogicalDirection, ScrollGranularity, float multiplier = 1, Node** stopNode = 0);
     bool canBeScrolledAndHasScrollableArea() const;
     virtual bool canBeProgramaticallyScrolled() const;
-    virtual void autoscroll();
+    virtual void autoscroll(const IntPoint&);
     bool canAutoscroll() const;
+    IntSize calculateAutoscrollDirection(const IntPoint& windowPoint) const;
     static RenderBox* findAutoscrollable(RenderObject*);
     virtual void stopAutoscroll() { }
     virtual void panScroll(const IntPoint&);

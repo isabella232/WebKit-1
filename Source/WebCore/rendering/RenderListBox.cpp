@@ -216,15 +216,15 @@ void RenderListBox::computePreferredLogicalWidths()
         m_maxPreferredLogicalWidth = m_optionsWidth + 2 * optionsSpacingHorizontal;
         if (m_vBar)
             m_maxPreferredLogicalWidth += m_vBar->width();
+
+        if (!style()->width().isPercent())
+            m_minPreferredLogicalWidth = m_maxPreferredLogicalWidth;
     }
 
     if (style()->minWidth().isFixed() && style()->minWidth().value() > 0) {
         m_maxPreferredLogicalWidth = max(m_maxPreferredLogicalWidth, adjustContentBoxLogicalWidthForBoxSizing(style()->minWidth().value()));
         m_minPreferredLogicalWidth = max(m_minPreferredLogicalWidth, adjustContentBoxLogicalWidthForBoxSizing(style()->minWidth().value()));
-    } else if (style()->width().isPercent() || (style()->width().isAuto() && style()->height().isPercent()))
-        m_minPreferredLogicalWidth = 0;
-    else
-        m_minPreferredLogicalWidth = m_maxPreferredLogicalWidth;
+    }
 
     if (style()->maxWidth().isFixed()) {
         m_maxPreferredLogicalWidth = min(m_maxPreferredLogicalWidth, adjustContentBoxLogicalWidthForBoxSizing(style()->maxWidth().value()));
@@ -554,7 +554,7 @@ int RenderListBox::scrollToward(const IntPoint& destination)
     return listIndexAtOffset(positionOffset);
 }
 
-void RenderListBox::autoscroll()
+void RenderListBox::autoscroll(const IntPoint&)
 {
     IntPoint pos = frame()->view()->windowToContents(frame()->eventHandler()->lastKnownMousePosition());
 

@@ -281,16 +281,22 @@ void PluginProcess::platformInitializeProcess(const ChildProcessInitializationPa
     // FIXME: It would be better to proxy SetCursor calls over to the UI process instead of
     // allowing plug-ins to change the mouse cursor at any time.
     WKEnableSettingCursorWhenInBackground();
+
+#if defined(__i386__)
+    NSDictionary *defaults = [[NSDictionary alloc] initWithObjectsAndKeys:[NSNumber numberWithBool:YES], @"AppleMagnifiedMode", nil];
+    [[NSUserDefaults standardUserDefaults] registerDefaults:defaults];
+    [defaults release];
+#endif
 }
 
 void PluginProcess::setModalWindowIsShowing(bool modalWindowIsShowing)
 {
-    m_connection->send(Messages::PluginProcessProxy::SetModalWindowIsShowing(modalWindowIsShowing), 0);
+    parentProcessConnection()->send(Messages::PluginProcessProxy::SetModalWindowIsShowing(modalWindowIsShowing), 0);
 }
 
 void PluginProcess::setFullscreenWindowIsShowing(bool fullscreenWindowIsShowing)
 {
-    m_connection->send(Messages::PluginProcessProxy::SetFullscreenWindowIsShowing(fullscreenWindowIsShowing), 0);
+    parentProcessConnection()->send(Messages::PluginProcessProxy::SetFullscreenWindowIsShowing(fullscreenWindowIsShowing), 0);
 }
 
 static void initializeSandbox(const String& pluginPath, const String& sandboxProfileDirectoryPath)

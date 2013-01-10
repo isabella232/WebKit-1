@@ -395,7 +395,7 @@ void RenderLayer::updateLayerPositions(RenderGeometryMap* geometryMap, UpdateLay
             // as canUseConvertToLayerCoords may be true for an ancestor layer.
             convertToLayerCoords(root(), offsetFromRoot);
         }
-        positionOverflowControls(toSize(roundedIntPoint(offsetFromRoot)));
+        positionOverflowControls(toIntSize(roundedIntPoint(offsetFromRoot)));
     }
 
     updateDescendantDependentFlags();
@@ -790,7 +790,7 @@ void RenderLayer::positionNewlyCreatedOverflowControls()
         geometryMap.pushMappingsToAncestor(parent(), 0);
 
     LayoutPoint offsetFromRoot = LayoutPoint(geometryMap.absolutePoint(FloatPoint()));
-    positionOverflowControls(toSize(roundedIntPoint(offsetFromRoot)));
+    positionOverflowControls(toIntSize(roundedIntPoint(offsetFromRoot)));
 }
 #endif
 
@@ -1896,7 +1896,8 @@ void RenderLayer::updateNeedsCompositedScrolling()
 {
     bool oldNeedsCompositedScrolling = m_needsCompositedScrolling;
 
-    if (!scrollsOverflow() || !allowsScrolling())
+    FrameView* frameView = renderer()->view()->frameView();
+    if (!frameView || !frameView->containsScrollableArea(this))
         m_needsCompositedScrolling = false;
     else {
         bool forceUseCompositedScrolling = acceleratedCompositingForOverflowScrollEnabled()
@@ -2291,7 +2292,7 @@ LayoutRect RenderLayer::getRectToExpose(const LayoutRect &visibleRect, const Lay
     return LayoutRect(LayoutPoint(x, y), visibleRect.size());
 }
 
-void RenderLayer::autoscroll()
+void RenderLayer::autoscroll(const IntPoint& position)
 {
     Frame* frame = renderer()->frame();
     if (!frame)
@@ -2301,11 +2302,7 @@ void RenderLayer::autoscroll()
     if (!frameView)
         return;
 
-#if ENABLE(DRAG_SUPPORT)
-    frame->eventHandler()->updateSelectionForMouseDrag();
-#endif
-
-    IntPoint currentDocumentPosition = frameView->windowToContents(frame->eventHandler()->lastKnownMousePosition());
+    IntPoint currentDocumentPosition = frameView->windowToContents(position);
     scrollRectToVisible(LayoutRect(currentDocumentPosition, LayoutSize(1, 1)), ScrollAlignment::alignToEdgeIfNeeded, ScrollAlignment::alignToEdgeIfNeeded);
 }
 
@@ -2735,11 +2732,6 @@ bool RenderLayer::scrollsOverflow() const
     return toRenderBox(renderer())->scrollsOverflow();
 }
 
-bool RenderLayer::allowsScrolling() const
-{
-    return (m_hBar && m_hBar->enabled()) || (m_vBar && m_vBar->enabled());
-}
-
 void RenderLayer::setHasHorizontalScrollbar(bool hasScrollbar)
 {
     if (hasScrollbar == hasHorizontalScrollbar())
@@ -3118,7 +3110,7 @@ void RenderLayer::paintOverflowControls(GraphicsContext* context, const IntPoint
     // Move the scrollbar widgets if necessary.  We normally move and resize widgets during layout, but sometimes
     // widgets can move without layout occurring (most notably when you scroll a document that
     // contains fixed positioned elements).
-    positionOverflowControls(toSize(adjustedPaintOffset));
+    positionOverflowControls(toIntSize(adjustedPaintOffset));
 
     // Now that we're sure the scrollbars are in the right place, paint them.
     if (m_hBar

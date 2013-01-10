@@ -321,10 +321,20 @@ function parseParameters()
     var oldDashboardSpecificState = g_currentState;
 
     parseCrossDashboardParameters();
+    
+    // Some parameters require loading different JSON files when the value changes. Do a reload.
+    if (Object.keys(oldCrossDashboardState).length) {
+        for (var key in g_crossDashboardState) {
+            if (oldCrossDashboardState[key] != g_crossDashboardState[key] && RELOAD_REQUIRING_PARAMETERS.indexOf(key) != -1) {
+                window.location.reload();
+                return {};
+            }
+        }
+    }
+
     parseDashboardSpecificParameters();
     parseParameter(queryHashAsMap(), 'builder');
 
-    var crossDashboardDiffState = diffStates(oldCrossDashboardState, g_crossDashboardState);
     var dashboardSpecificDiffState = diffStates(oldDashboardSpecificState, g_currentState);
 
     fillMissingValues(g_currentState, g_defaultDashboardSpecificStateValues);
@@ -337,14 +347,6 @@ function parseParameters()
         delete g_currentState.tests;
     if (g_currentState.tests)
         delete g_currentState.builder;
-
-    // Some parameters require loading different JSON files when the value changes. Do a reload.
-    if (Object.keys(oldCrossDashboardState).length) {
-        for (var key in g_crossDashboardState) {
-            if (oldCrossDashboardState[key] != g_crossDashboardState[key] && RELOAD_REQUIRING_PARAMETERS.indexOf(key) != -1)
-                window.location.reload();
-        }
-    }
 
     return dashboardSpecificDiffState;
 }
@@ -429,8 +431,6 @@ function isTipOfTreeWebKitBuilder()
 
 var g_resultsByBuilder = {};
 var g_expectationsByPlatform = {};
-var g_staleBuilders = [];
-var g_buildersThatFailedToLoad = [];
 
 // TODO(aboxhall): figure out whether this is a performance bottleneck and
 // change calling code to understand the trie structure instead if necessary.
@@ -462,7 +462,6 @@ function isFlakinessDashboard()
     return endsWith(window.location.pathname, 'flakiness_dashboard.html');
 }
 
-var g_hasDoneInitialPageGeneration = false;
 // String of error messages to display to the user.
 var g_errorMessages = '';
 
@@ -473,11 +472,6 @@ function addError(errorMsg)
     g_errorMessages += errorMsg + '<br>';
 }
 
-// Clear out error and warning messages.
-function clearErrors()
-{
-    g_errorMessages = '';
-}
 
 // If there are errors, show big and red UI for errors so as to be noticed.
 function showErrors()
@@ -500,21 +494,13 @@ function showErrors()
     errors.innerHTML = g_errorMessages;
 }
 
-function addBuilderLoadErrors()
-{
-    if (g_hasDoneInitialPageGeneration)
-        return;
-
-    if (g_buildersThatFailedToLoad.length)
-        addError('ERROR: Failed to get data from ' + g_buildersThatFailedToLoad.toString() + '.');
-
-    if (g_staleBuilders.length)
-        addError('ERROR: Data from ' + g_staleBuilders.toString() + ' is more than 1 day stale.');
-}
-
-function resourceLoadingComplete()
+function resourceLoadingComplete(errorMsgs)
 {
     g_resourceLoader = null;
+    
+    if (errorMsgs)
+        addError(errorMsgs)
+
     handleLocationChange();
 }
 
@@ -523,23 +509,12 @@ function handleLocationChange()
     if (g_resourceLoader)
         return;
 
-    addBuilderLoadErrors();
-    g_hasDoneInitialPageGeneration = true;
-
     var params = parseParameters();
     var shouldGeneratePage = true;
     if (Object.keys(params).length)
         shouldGeneratePage = handleQueryParameterChange(params);
 
-    var newHash = permaLinkURLHash();
-    var winHash = window.location.hash || "#";
-    // Make sure the location is the same as the state we are using internally.
-    // These get out of sync if processQueryParamChange changed state.
-    if (newHash != winHash) {
-        // This will cause another hashchange, and when we loop
-        // back through here next time, we'll go through generatePage.
-        window.location.hash = newHash;
-    } else if (shouldGeneratePage)
+    if (shouldGeneratePage)
         generatePage();
 }
 

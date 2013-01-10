@@ -34,13 +34,10 @@
 #include "WebCompositionUnderline.h"
 #include "WebTextDirection.h"
 #include "WebTextInputInfo.h"
-#include "platform/WebCanvas.h"
-#include "platform/WebCommon.h"
-#include "platform/WebRect.h"
-#include "platform/WebSize.h"
-
-#define WEBWIDGET_HAS_SETCOMPOSITORSURFACEREADY 1
-#define WEBWIDGET_HAS_PAINT_OPTIONS 1
+#include <public/WebCanvas.h>
+#include <public/WebCommon.h>
+#include <public/WebRect.h>
+#include <public/WebSize.h>
 
 namespace WebKit {
 
@@ -222,6 +219,10 @@ public:
     // Returns true if the WebWidget uses GPU accelerated compositing
     // to render its contents.
     virtual bool isAcceleratedCompositingActive() const { return false; }
+
+    // The WebLayerTreeView initialized on this WebWidgetClient will be going away and
+    // is no longer safe to access.
+    virtual void willCloseLayerTreeView() { }
 
     // Calling WebWidgetClient::requestPointerLock() will result in one
     // return call to didAcquirePointerLock() or didNotAcquirePointerLock().

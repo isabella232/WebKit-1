@@ -201,6 +201,8 @@ public:
 
     void setNetworkInformation(Document*, const String& eventType, double bandwidth, bool metered, ExceptionCode&);
 
+    void setDeviceProximity(Document*, const String& eventType, double value, double min, double max, ExceptionCode&);
+
     void suspendAnimations(Document*, ExceptionCode&) const;
     void resumeAnimations(Document*, ExceptionCode&) const;
 
@@ -215,8 +217,8 @@ public:
     String layerTreeAsText(Document*, ExceptionCode&) const;
     String repaintRectsAsText(Document*, ExceptionCode&) const;
     String scrollingStateTreeAsText(Document*, ExceptionCode&) const;
-
     String mainThreadScrollingReasons(Document*, ExceptionCode&) const;
+    PassRefPtr<ClientRectList> nonFastScrollableRects(Document*, ExceptionCode&) const;
 
     void garbageCollectDocumentResources(Document*, ExceptionCode&) const;
 

@@ -39,6 +39,7 @@
 #include "Settings.h"
 #include "SubresourceLoader.h"
 #include <wtf/CurrentTime.h>
+#include <wtf/MemoryInstrumentationHashMap.h>
 #include <wtf/MemoryObjectInfo.h>
 #include <wtf/StdLibExtras.h>
 #include <wtf/Vector.h>
@@ -329,10 +330,12 @@ inline void CachedImage::createImage()
     else
         m_image = BitmapImage::create(this);
 
-    // Send queued container size requests.
-    if (m_image && m_image->usesContainerSize()) {
-        for (ContainerSizeRequests::iterator it = m_pendingContainerSizeRequests.begin(); it != m_pendingContainerSizeRequests.end(); ++it)
-            setContainerSizeForRenderer(it->key, it->value.first, it->value.second);
+    if (m_image) {
+        // Send queued container size requests.
+        if (m_image->usesContainerSize()) {
+            for (ContainerSizeRequests::iterator it = m_pendingContainerSizeRequests.begin(); it != m_pendingContainerSizeRequests.end(); ++it)
+                setContainerSizeForRenderer(it->key, it->value.first, it->value.second);
+        }
         m_pendingContainerSizeRequests.clear();
     }
 }
@@ -485,6 +488,7 @@ void CachedImage::reportMemoryUsage(MemoryObjectInfo* memoryObjectInfo) const
     MemoryClassInfo info(memoryObjectInfo, this, WebCoreMemoryTypes::CachedResourceImage);
     memoryObjectInfo->setClassName("CachedImage");
     CachedResource::reportMemoryUsage(memoryObjectInfo);
+    info.addMember(m_pendingContainerSizeRequests);
     info.addMember(m_image, "m_image");
 #if ENABLE(SVG)
     info.addMember(m_svgImageCache);
