@@ -47,7 +47,9 @@ namespace WebKit {
 class WebEventFactory {
 public:
     static WebMouseEvent createWebMouseEvent(QMouseEvent*, const QTransform& fromItemTransform, int eventClickCount);
+#ifndef QT_NO_WHEELEVENT
     static WebWheelEvent createWebWheelEvent(QWheelEvent*, const QTransform& fromItemTransform);
+#endif
     static WebKeyboardEvent createWebKeyboardEvent(QKeyEvent*);
 #if ENABLE(TOUCH_EVENTS)
     static WebTouchEvent createWebTouchEvent(const QTouchEvent*, const QTransform& fromItemTransform);
