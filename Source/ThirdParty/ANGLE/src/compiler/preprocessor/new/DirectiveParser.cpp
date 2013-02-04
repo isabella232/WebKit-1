@@ -709,7 +709,7 @@ void DirectiveParser::parseVersion(Token* token)
                                      token->location, token->value);
                 valid = false;
             }
-            if (valid) version = atoi(token->value.c_str());
+            if (valid) version = std::atoi(token->value.c_str());
             break;
           default:
             if (valid)
@@ -759,7 +759,7 @@ void DirectiveParser::parseLine(Token* token)
                                      token->location, token->value);
                 valid = false;
             }
-            if (valid) line = atoi(token->value.c_str());
+            if (valid) line = std::atoi(token->value.c_str());
             break;
           case FILE_NUMBER:
             if (valid && (token->type != Token::CONST_INT))
@@ -768,7 +768,7 @@ void DirectiveParser::parseLine(Token* token)
                                      token->location, token->value);
                 valid = false;
             }
-            if (valid) file = atoi(token->value.c_str());
+            if (valid) file = std::atoi(token->value.c_str());
             break;
           default:
             if (valid)

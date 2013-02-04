@@ -33,7 +33,7 @@ WHICH GENERATES THE GLSL ES preprocessor expression parser.
 #endif
 
 #include "ExpressionParser.h"
-
+using namespace std;
 #include <cassert>
 #include <cstdlib>
 #include <sstream>
