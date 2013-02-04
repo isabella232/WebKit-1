@@ -550,8 +550,12 @@ bool Connection::sendOutgoingMessage(MessageID messageID, PassOwnPtr<MessageEnco
 
     int bytesSent = 0;
     while ((bytesSent = sendmsg(m_socketDescriptor, &message, 0)) == -1) {
-        if (errno != EINTR)
-            return false;
+        if (errno == ENOBUFS) {
+            usleep(10000); // 10ms
+            continue;
+        } else if (errno != EINTR) {
+             return false;
+        }
     }
     return true;
 }
